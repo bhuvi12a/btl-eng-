@@ -1,36 +1,193 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# BTL Engineering - Precision Engineering Excellence
 
-## Getting Started
+A professional, premium website for **BTL Engineering** - an ISO 9001:2015 certified precision engineering company based in Hosur, India, serving OEM and Aerospace customers.
 
-First, run the development server:
+## 🏢 Company Overview
 
+BTL Engineering specializes in precision-machined, forged, and sheet-metal components for automotive, industrial, and aerospace sectors, delivering consistent quality with strong design and development capabilities.
+
+## ✨ Website Features
+
+- **Premium Design**: Modern dark theme with BTL brand colors (cyan blue and orange)
+- **Smooth Animations**: Fade-in effects, floating elements, and pulsing glows
+- **Glassmorphism Effects**: Backdrop blur with translucent backgrounds
+- **Fully Responsive**: Optimized for all devices and screen sizes
+- **SEO Optimized**: Proper meta tags and semantic HTML
+- **Fast Performance**: Static generation with Next.js
+
+## 📄 Page Sections
+
+### 1. **Hero Section**
+- BTL Engineering logo prominently displayed
+- ISO 9001:2015 certification badge
+- Company tagline and introduction
+- Call-to-action buttons
+
+### 2. **Design & Engineering Strength**
+Four key capabilities:
+- In-house Design & Development Support
+- Concept Design, DFM & Value Engineering
+- Design Optimization for Performance & Cost
+- Prototype Development & Validation Support
+
+### 3. **Industries We Serve**
+Three primary sectors:
+- **Automotive**: OEMs & Tier-1 Suppliers
+- **Industrial**: Equipment Manufacturers
+- **Aerospace**: Precision Engineering Applications
+
+### 4. **About BTL Engineering**
+Comprehensive company overview including:
+- Location: Hosur, India
+- ISO 9001:2015 certification
+- Design and engineering capabilities
+- Manufacturing expertise
+- Customer-focused approach
+
+### 5. **Certifications & Compliance**
+- ISO 9001:2015 Quality Management System certification
+- Quality assurance commitment
+
+### 6. **Statistics**
+- 100% Quality Assured
+- 3 Key Industries
+- OEM Grade Supply
+- 24/7 Support
+
+### 7. **Professional Footer**
+- Company information
+- Quick navigation links
+- Contact details
+- Copyright and branding
+
+## 🎨 Brand Colors
+
+Based on BTL Engineering logo:
+- **Primary Blue**: `#2B9BC8` (Cyan blue from logo)
+- **Secondary Blue**: `#1a7ba8` (Darker shade)
+- **Orange Accent**: `#ff6b35` (From flame icon)
+- **Red Accent**: `#ff4500` (Flame gradient)
+- **Background**: Dark gradient from slate to blue
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+ installed
+- npm package manager
+
+### Installation & Running
+
+1. Navigate to the project directory:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd btl-app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies (if needed):
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+3. Run the development server:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Learn More
+## 📁 Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+btl-app/
+├── app/
+│   ├── globals.css      # BTL brand design system & animations
+│   ├── layout.js        # Root layout with metadata
+│   ├── page.js          # Main company page
+│   └── favicon.ico      # Site icon
+├── public/
+│   └── btl-logo.png     # BTL Engineering logo
+├── package.json
+└── README.md
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ Technologies
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Framework**: Next.js 16 with App Router
+- **Styling**: Tailwind CSS v4
+- **Fonts**: Google Fonts (Inter)
+- **Animations**: Custom CSS keyframes
+- **Image Optimization**: Next.js Image component
 
-## Deploy on Vercel
+## 📱 Responsive Design
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Fully responsive with breakpoints:
+- **Mobile**: < 640px
+- **Tablet**: 640px - 1024px
+- **Desktop**: > 1024px
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎯 Key Features
+
+### Design Elements
+✅ BTL logo with drop shadow  
+✅ Animated gradient text  
+✅ Glassmorphism cards with backdrop blur  
+✅ Smooth hover transitions and scale effects  
+✅ Floating background elements  
+✅ Pulse-glow CTA buttons  
+
+### Content Sections
+✅ Company introduction and mission  
+✅ Design & engineering capabilities  
+✅ Industries served with detailed descriptions  
+✅ Comprehensive about section  
+✅ Certification showcase  
+✅ Key statistics and metrics  
+✅ Professional footer with contact info  
+
+### Technical Excellence
+✅ SEO-friendly metadata  
+✅ Semantic HTML structure  
+✅ Accessible color contrast  
+✅ Fast load times (static generation)  
+✅ Mobile-first approach  
+
+## 🎨 Customization
+
+### Brand Colors
+Modify CSS variables in `app/globals.css`:
+```css
+:root {
+  --accent-primary: #2B9BC8;
+  --accent-secondary: #1a7ba8;
+  --accent-tertiary: #ff6b35;
+}
+```
+
+### Content Updates
+Edit `app/page.js` to update:
+- Company information
+- Service descriptions
+- Industry details
+- Contact information
+- Footer links
+
+### Logo
+Replace `/public/btl-logo.png` with your updated logo.
+
+## 📞 Contact Information
+
+**BTL Engineering**  
+📍 Hosur, India  
+✉️ info@btlengineering.com  
+🏆 ISO 9001:2015 Certified  
+
+## 📝 License
+
+© 2026 BTL Engineering. All rights reserved.
+
+## 🤝 Built With Excellence
+
+Professional website showcasing precision engineering capabilities with modern web technologies.
+
+---
+
+**Built for precision engineering excellence** 🔧
