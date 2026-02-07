@@ -42,7 +42,7 @@ h6 {
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-semibold rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 shadow-sm hover:shadow-md;
+  @apply inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-semibold rounded-md text-white bg-orange-600 hover:bg-orange-500 transition-colors duration-200 shadow-sm hover:shadow-md;
 }
 
 .btn-secondary {

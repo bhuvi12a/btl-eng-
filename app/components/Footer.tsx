@@ -81,41 +81,42 @@ export default function Footer() {
     const currentYear = new Date().getFullYear();
 
     return (
-        <footer className="bg-slate-950 text-slate-300 border-t border-slate-800">
+        <footer className="bg-orange-50 text-slate-600 border-t border-orange-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
                     {/* Company Info Column */}
                     <div className="lg:col-span-1">
                         <Link href="/" className="inline-block mb-6">
-                            <div className="bg-white/5 rounded-lg p-2 inline-block">
+                            <div className="p-2 inline-block">
                                 <img
                                     src="/btl-logo-new.png"
                                     alt="BTL Engineering"
-                                    className="h-auto w-auto max-w-[250px]"
+                                    className="h-auto w-auto max-w-[200px]"
+                                    style={{ mixBlendMode: 'multiply' }}
                                 />
                             </div>
                         </Link>
 
-                        <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                        <p className="text-slate-600 text-sm leading-relaxed mb-6">
                             ISO 9001:2015 certified precision engineering company delivering excellence
                             in manufacturing for automotive, industrial, and aerospace sectors.
                         </p>
 
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-orange-200 shadow-sm">
                             <span className="text-sm"></span>
-                            <span className="text-xs font-medium text-slate-300">ISO 9001:2015 Certified</span>
+                            <span className="text-xs font-medium text-orange-800">ISO 9001:2015 Certified</span>
                         </div>
                     </div>
 
                     {/* Quick Links Column */}
                     <div>
-                        <h4 className="text-white font-semibold text-base mb-6">Quick Links</h4>
+                        <h4 className="text-slate-900 font-bold text-base mb-6">Quick Links</h4>
                         <ul className="space-y-3 text-sm">
                             {quickLinks.map((link) => (
                                 <li key={link.label}>
                                     <Link
                                         href={link.href}
-                                        className="hover:text-sky-400 transition-colors duration-200"
+                                        className="text-slate-600 hover:text-orange-600 transition-colors duration-200"
                                     >
                                         {link.label}
                                     </Link>
@@ -126,13 +127,13 @@ export default function Footer() {
 
                     {/* Services Column */}
                     <div>
-                        <h4 className="text-white font-semibold text-base mb-6">Our Services</h4>
+                        <h4 className="text-slate-900 font-bold text-base mb-6">Our Services</h4>
                         <ul className="space-y-3 text-sm">
                             {serviceLinks.map((link) => (
                                 <li key={link.label}>
                                     <Link
                                         href={link.href}
-                                        className="hover:text-sky-400 transition-colors duration-200"
+                                        className="text-slate-600 hover:text-orange-600 transition-colors duration-200"
                                     >
                                         {link.label}
                                     </Link>
@@ -143,21 +144,21 @@ export default function Footer() {
 
                     {/* Contact Column */}
                     <div>
-                        <h4 className="text-white font-semibold text-base mb-6">Contact Us</h4>
+                        <h4 className="text-slate-900 font-bold text-base mb-6">Contact Us</h4>
                         <ul className="space-y-4 text-sm">
                             {contactInfo.map((info) => (
                                 <li key={info.label}>
                                     {info.href ? (
                                         <a
                                             href={info.href}
-                                            className="flex items-start gap-3 hover:text-white transition-colors duration-200"
+                                            className="flex items-start gap-3 text-slate-600 hover:text-orange-600 transition-colors duration-200"
                                         >
-                                            <span className="mt-0.5">{info.icon}</span>
+                                            <span className="mt-0.5 text-orange-500">{info.icon}</span>
                                             <span>{info.value}</span>
                                         </a>
                                     ) : (
-                                        <div className="flex items-start gap-3">
-                                            <span className="mt-0.5">{info.icon}</span>
+                                        <div className="flex items-start gap-3 text-slate-600">
+                                            <span className="mt-0.5 text-orange-500">{info.icon}</span>
                                             <span>{info.value}</span>
                                         </div>
                                     )}
@@ -173,7 +174,7 @@ export default function Footer() {
                                         key={social.name}
                                         href={social.href}
                                         aria-label={social.name}
-                                        className="text-slate-400 hover:text-white transition-colors duration-200"
+                                        className="text-slate-400 hover:text-orange-600 transition-colors duration-200"
                                     >
                                         {social.icon}
                                     </a>
@@ -185,17 +186,17 @@ export default function Footer() {
             </div>
 
             {/* Bottom Bar */}
-            <div className="border-t border-slate-800">
+            <div className="border-t border-orange-200 bg-orange-100/50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
                         <p className="text-center md:text-left">
-                            © {currentYear} BTL Engineering. All rights reserved. | Made by <a href="https://booworks.co" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">booworks.co</a>
+                            © {currentYear} BTL Engineering. All rights reserved. | Made by <a href="https://booworks.co" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:text-orange-700 font-medium transition-colors">booworks.co</a>
                         </p>
                         <div className="flex items-center gap-6">
-                            <Link href="#" className="hover:text-slate-300 transition-colors">
+                            <Link href="#" className="hover:text-orange-600 transition-colors">
                                 Privacy Policy
                             </Link>
-                            <Link href="#" className="hover:text-slate-300 transition-colors">
+                            <Link href="#" className="hover:text-orange-600 transition-colors">
                                 Terms of Service
                             </Link>
                         </div>

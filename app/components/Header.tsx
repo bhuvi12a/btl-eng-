@@ -15,6 +15,7 @@ const navLinks: NavLink[] = [
     { label: 'Company', href: '/about' },
     { label: 'Services', href: '/services' },
     { label: 'Industries', href: '/industries' },
+    { label: 'Testimonials', href: '/testimonials' },
     { label: 'Contact', href: '/contact' },
 ];
 
@@ -43,12 +44,12 @@ export default function Header() {
     return (
         <header
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                ? 'bg-white/80 backdrop-blur-md border-b border-sky-100 shadow-sm py-2'
-                : 'bg-transparent border-transparent py-4'
+                ? 'bg-white/95 backdrop-blur-md border-b border-sky-100 shadow-sm py-2'
+                : 'bg-white border-b border-sky-100 py-2'
                 }`}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <nav className="flex items-center justify-between py-4 min-h-20">
+                <nav className="flex items-center justify-between py-2">
                     {/* Logo */}
                     <Link
                         href="/"
@@ -59,18 +60,20 @@ export default function Header() {
                             <img
                                 src="/btl-logo-new.png"
                                 alt="BTL Engineering"
-                                className="h-full w-auto object-contain max-h-28"
+                                className="h-full w-auto object-contain max-h-20"
                             />
                         </div>
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden lg:flex items-center gap-8">
+                    <div className="hidden lg:flex items-center gap-4">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.label}
                                 href={link.href}
-                                className={`text-sm font-medium transition-colors duration-200 ${pathname === link.href ? 'text-sky-600' : 'text-slate-600 hover:text-sky-600'
+                                className={`text-sm font-medium px-3 py-1 rounded-md transition-all duration-200 border ${pathname === link.href
+                                    ? 'bg-sky-50 text-sky-700 border-sky-200 shadow-sm'
+                                    : 'text-slate-600 border-slate-100 bg-white hover:bg-gray-50 hover:text-sky-600 hover:border-sky-100 hover:shadow-sm'
                                     }`}
                             >
                                 {link.label}

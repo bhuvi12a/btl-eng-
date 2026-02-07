@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -44,13 +45,13 @@ export default function AboutPage() {
                         </div>
                     </div>
                     <div className="relative">
-                        <div className="aspect-[4/3] bg-gray-100 rounded-2xl border border-gray-200 shadow-lg flex items-center justify-center overflow-hidden">
-                            {/* Placeholder for Facility Image */}
-                            <div className="text-center">
-                                <div className="text-6xl mb-4"></div>
-                                <p className="text-gray-500 font-medium">State-of-the-art Facility</p>
-                                <p className="text-sm text-gray-400">Hosur, Tamil Nadu</p>
-                            </div>
+                        <div className="relative aspect-[4/3] bg-gray-100 rounded-2xl border border-gray-200 shadow-lg flex items-center justify-center overflow-hidden">
+                            <Image
+                                src="/factory-floor.png"
+                                alt="State-of-the-art Facility in Hosur"
+                                fill
+                                className="object-cover"
+                            />
                         </div>
                         {/* Stat Badge */}
                         <div className="absolute -bottom-8 -left-8 bg-blue-600 text-white p-8 rounded-xl shadow-xl hidden md:block">
