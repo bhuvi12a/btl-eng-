@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
@@ -19,7 +18,7 @@ const navLinks: NavLink[] = [
     { label: 'Contact', href: '/contact' },
 ];
 
-export default function Header() {
+export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState<boolean>(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
     const pathname = usePathname();
@@ -59,7 +58,7 @@ export default function Header() {
                         <img
                             src="/btl-logo-new.png"
                             alt="BTL Engineering"
-                            className="w-[160px] lg:w-[200px] h-auto object-contain"
+                            className="w-[120px] lg:w-[150px] h-auto object-contain"
                         />
                     </Link>
 

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import Header from './components/Header';
+import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
 export const metadata: Metadata = {
@@ -46,7 +46,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 <meta name="theme-color" content="#ffffff" />
             </head>
             <body className="antialiased font-sans">
-                <Header />
+                <Navbar />
                 {children}
                 <Footer />
             </body>
