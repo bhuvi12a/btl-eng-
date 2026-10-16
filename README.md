@@ -1,64 +1,43 @@
-# BTL Engineering - Precision Engineering Excellence
+# BTL – Company Profile & Web Application
 
-A professional, premium website for **BTL Engineering** - an ISO 9001:2015 certified precision engineering company based in Hosur, India, serving OEM and Aerospace customers.
+A professional, high-performance website for **BTL** — a premier precision engineering company based in Hosur, Tamil Nadu, India, manufacturing mission-critical automotive and aerospace components.
 
-## 🏢 Company Overview
+## 🏢 Company Profile
 
-BTL Engineering specializes in precision-machined, forged, and sheet-metal components for automotive, industrial, and aerospace sectors, delivering consistent quality with strong design and development capabilities.
+- **Company Name:** BTL
+- **Established:** 2024
+- **Products Manufactured:** Automotive and aerospace components
+- **Materials Used:** Steel, Aluminium, Stainless Steel (SS)
+- **Employee Count:** 20+
+- **Client Count:** 10+
+- **Location:** Hosur, Tamil Nadu, India
+
+### Technology & Machinery
+- CNC Machines
+- VMC Milling Machines
+- Drilling Machines
+
+### Facilities & Capabilities
+- In-house Tool Room
+- Engineering Design
+- Weld Shop / Fabrication
+- Complete Component Inspection
 
 ## ✨ Website Features
 
-- **Premium Design**: Modern dark theme with BTL brand colors (cyan blue and orange)
-- **Smooth Animations**: Fade-in effects, floating elements, and pulsing glows
-- **Glassmorphism Effects**: Backdrop blur with translucent backgrounds
-- **Fully Responsive**: Optimized for all devices and screen sizes
-- **SEO Optimized**: Proper meta tags and semantic HTML
-- **Fast Performance**: Static generation with Next.js
+- **Premium Design**: Modern aesthetic tailored for automotive and aerospace OEMs
+- **Full Responsiveness**: Optimized across mobile, tablet, and desktop viewports
+- **SEO Optimized**: Standard semantic HTML5 and metadata for all routes
+- **Fast Performance**: Next.js App Router with React Server and Client Components
 
-## 📄 Page Sections
+## 📄 Key Pages
 
-### 1. **Hero Section**
-- BTL Engineering logo prominently displayed
-- ISO 9001:2015 certification badge
-- Company tagline and introduction
-- Call-to-action buttons
-
-### 2. **Design & Engineering Strength**
-Four key capabilities:
-- In-house Design & Development Support
-- Concept Design, DFM & Value Engineering
-- Design Optimization for Performance & Cost
-- Prototype Development & Validation Support
-
-### 3. **Industries We Serve**
-Three primary sectors:
-- **Automotive**: OEMs & Tier-1 Suppliers
-- **Industrial**: Equipment Manufacturers
-- **Aerospace**: Precision Engineering Applications
-
-### 4. **About BTL Engineering**
-Comprehensive company overview including:
-- Location: Hosur, India
-- ISO 9001:2015 certification
-- Design and engineering capabilities
-- Manufacturing expertise
-- Customer-focused approach
-
-### 5. **Certifications & Compliance**
-- ISO 9001:2015 Quality Management System certification
-- Quality assurance commitment
-
-### 6. **Statistics**
-- 100% Quality Assured
-- 3 Key Industries
-- OEM Grade Supply
-- 24/7 Support
-
-### 7. **Professional Footer**
-- Company information
-- Quick navigation links
-- Contact details
-- Copyright and branding
+- **Home (`/`)**: Hero with quick stats, Company Profile overview, Machinery, Facilities, and Materials.
+- **About (`/about`)**: Complete profile matrix, operational background, machinery breakdown, and facilities.
+- **Capabilities & Services (`/services`)**: CNC, VMC, Drilling machines, in-house tool room, welding, and 100% inspection.
+- **Products & Industries (`/industries`)**: Automotive and aerospace components in Steel, Aluminium, and Stainless Steel.
+- **Testimonials & Culture (`/testimonials`)**: OEM feedback and team culture.
+- **Contact (`/contact`)**: Inquiries, RFQs, and Hosur facility details.
 
 ## 🎨 Brand Colors
 

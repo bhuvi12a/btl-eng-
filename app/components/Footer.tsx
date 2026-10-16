@@ -15,44 +15,58 @@ interface SocialLink {
 }
 
 interface ContactInfo {
-    icon: string;
+    icon: React.ReactNode;
     label: string;
     value: string;
     href?: string;
 }
 
 const quickLinks: FooterLink[] = [
-    { label: 'Home', href: '#home' },
-    { label: 'Company', href: '#about' }, // Updated
-    { label: 'Services', href: '#services' }, // Updated
-    { label: 'Industries', href: '#industries' }, // Updated
-    { label: 'Certifications', href: '#certifications' }, // Updated
-    { label: 'Contact', href: '#contact' }, // Updated
+    { label: 'Home', href: '/' },
+    { label: 'Company', href: '/about' },
+    { label: 'Services', href: '/services' },
+    { label: 'Industries', href: '/industries' },
+    { label: 'Testimonials', href: '/testimonials' },
+    { label: 'Contact', href: '/contact' },
 ];
 
 const serviceLinks: FooterLink[] = [
-    { label: 'Precision Machining', href: '#' },
-    { label: 'Sheet Metal Components', href: '#' },
-    { label: 'Forged Components', href: '#' },
-    { label: 'Design & Development', href: '#' },
+    { label: 'CNC & VMC Machining', href: '/services' },
+    { label: 'In-house Tool Room', href: '/services' },
+    { label: 'Weld Shop / Fabrication', href: '/services' },
+    { label: 'Complete Component Inspection', href: '/services' },
 ];
 
 const contactInfo: ContactInfo[] = [
     {
-        icon: '',
+        icon: (
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        ),
         label: 'Address',
         value: 'Hosur, Tamil Nadu, India',
     },
     {
-        icon: '',
+        icon: (
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+        ),
         label: 'Email',
         value: 'info@btlengineering.com',
         href: 'mailto:info@btlengineering.com',
     },
     {
-        icon: '',
+        icon: (
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+        ),
         label: 'Phone',
-        value: '+91 4344 123456', // Placeholder format
+        value: '+91 86103 54754',
+        href: 'tel:+918610354754',
     },
 ];
 
@@ -88,9 +102,11 @@ export default function Footer() {
                     <div className="lg:col-span-1">
                         <Link href="/" className="inline-block mb-6">
                             <div className="p-2 inline-block">
-                                <img
+                                <Image
                                     src="/btl-logo-new.png"
-                                    alt="BTL Engineering"
+                                    alt="BTL"
+                                    width={200}
+                                    height={60}
                                     className="h-auto w-auto max-w-[200px]"
                                     style={{ mixBlendMode: 'multiply' }}
                                 />
@@ -98,13 +114,14 @@ export default function Footer() {
                         </Link>
 
                         <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                            ISO 9001:2015 certified precision engineering company delivering excellence
-                            in manufacturing for automotive, industrial, and aerospace sectors.
+                            Established in 2024 in Hosur, Tamil Nadu. BTL specializes in manufacturing precision automotive and aerospace components in Steel, Aluminium, and Stainless Steel (SS).
                         </p>
 
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-orange-200 shadow-sm">
-                            <span className="text-sm"></span>
-                            <span className="text-xs font-medium text-orange-800">ISO 9001:2015 Certified</span>
+                            <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-xs font-medium text-orange-800">Est. 2024 • Hosur, Tamil Nadu</span>
                         </div>
                     </div>
 
@@ -190,7 +207,7 @@ export default function Footer() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
                         <p className="text-center md:text-left">
-                            © {currentYear} BTL Engineering. All rights reserved. | Made by <a href="https://booworks.co" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:text-orange-700 font-medium transition-colors">booworks.co</a>
+                            © {currentYear} BTL. All rights reserved. | Made by <a href="https://booworks.co" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:text-orange-700 font-medium transition-colors">booworks.co</a>
                         </p>
                         <div className="flex items-center gap-6">
                             <Link href="#" className="hover:text-orange-600 transition-colors">

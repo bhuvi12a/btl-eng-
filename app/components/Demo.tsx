@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface Testimonial {
     id: number;
@@ -22,7 +23,7 @@ const testimonials: Testimonial[] = [
         position: "VP of Engineering",
         company: "AutoTech Industries",
         industry: "Automotive",
-        content: "BTL Engineering has been our trusted partner for precision CNC components for over 3 years. Their attention to detail and zero-defect commitment has significantly improved our production line efficiency. The team's ability to handle complex geometries with micron-level tolerances is truly exceptional.",
+        content: "BTL has been our go-to partner for precision CNC and VMC milled automotive components since their 2024 establishment. Their attention to detail and zero-defect commitment has significantly improved our production line efficiency. The team's ability to handle complex geometries with micron-level tolerances is truly exceptional.",
         rating: 5,
         image: "/testimonials/client1.jpg",
         projectType: "Transmission Components"
@@ -171,7 +172,7 @@ export default function TestimonialsPage() {
                                     </div>
 
                                     <blockquote className="text-lg md:text-xl text-slate-700 leading-relaxed mb-8 italic">
-                                        "{testimonials[activeIndex].content}"
+                                        &ldquo;{testimonials[activeIndex].content}&rdquo;
                                     </blockquote>
 
                                     <div className="flex items-center gap-4 mb-6">
@@ -289,7 +290,7 @@ export default function TestimonialsPage() {
 
                                 {/* Content */}
                                 <p className="text-slate-700 leading-relaxed mb-6 line-clamp-4">
-                                    "{testimonial.content}"
+                                    &ldquo;{testimonial.content}&rdquo;
                                 </p>
 
                                 {/* Client Info */}
@@ -427,10 +428,10 @@ export default function TestimonialsPage() {
 
                     <div className="grid md:grid-cols-4 gap-8">
                         {[
-                            { number: "100+", label: "Projects Completed", icon: "🎯" },
-                            { number: "50+", label: "Global Clients", icon: "🌍" },
-                            { number: "99.8%", label: "On-Time Delivery", icon: "⚡" },
-                            { number: "5.0", label: "Average Rating", icon: "⭐" }
+                            { number: "2024", label: "Established in Hosur", icon: "🏢" },
+                            { number: "20+", label: "Skilled Employees", icon: "👥" },
+                            { number: "10+", label: "Trusted OEM Clients", icon: "🤝" },
+                            { number: "100%", label: "Component Inspection", icon: "🎯" }
                         ].map((stat, index) => (
                             <div
                                 key={index}
@@ -552,21 +553,21 @@ export default function TestimonialsPage() {
                         Ready to Join Our Success Stories?
                     </h2>
                     <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto">
-                        Partner with BTL Engineering for precision manufacturing that exceeds expectations. Let's discuss your project requirements.
+                        Partner with BTL Engineering for precision manufacturing that exceeds expectations. Let&apos;s discuss your project requirements.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a
+                        <Link
                             href="/contact"
                             className="px-10 py-5 bg-orange-600 text-white font-bold text-lg rounded-lg hover:bg-orange-500 transition-colors shadow-lg shadow-orange-900/20"
                         >
                             Request a Quote
-                        </a>
-                        <a
+                        </Link>
+                        <Link
                             href="/services"
                             className="px-10 py-5 bg-white text-sky-600 font-bold text-lg rounded-lg border-2 border-sky-200 hover:bg-sky-50 transition-colors"
                         >
                             View Capabilities
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </section>

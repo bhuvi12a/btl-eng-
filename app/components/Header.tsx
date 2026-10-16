@@ -56,9 +56,12 @@ export default function Header() {
                         onClick={closeMobileMenu}
                         className="flex items-center -my-2"
                     >
-                        <img
+                        <Image
                             src="/btl-logo-new.png"
-                            alt="BTL Engineering"
+                            alt="BTL"
+                            width={200}
+                            height={60}
+                            priority
                             className="w-[160px] lg:w-[200px] h-auto object-contain"
                         />
                     </Link>
@@ -77,6 +80,18 @@ export default function Header() {
                                 {link.label}
                             </Link>
                         ))}
+
+                        {/* Phone Call Button */}
+                        <a
+                            href="tel:+918610354754"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-sky-600 px-3 py-2 rounded-md border border-slate-200 bg-slate-50 hover:bg-sky-50 hover:border-sky-200 transition-all shadow-sm"
+                            title="Call BTL"
+                        >
+                            <svg className="w-3.5 h-3.5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            <span>8610354754</span>
+                        </a>
 
                         {/* CTA Button */}
                         <Link
@@ -118,6 +133,16 @@ export default function Header() {
                                     {link.label}
                                 </Link>
                             ))}
+                            <a
+                                href="tel:+918610354754"
+                                onClick={closeMobileMenu}
+                                className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-sky-50 text-sky-700 font-semibold border border-sky-200 text-sm"
+                            >
+                                <svg className="w-4 h-4 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                <span>Call: +91 86103 54754</span>
+                            </a>
                             <Link
                                 href="/contact"
                                 onClick={closeMobileMenu}

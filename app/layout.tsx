@@ -4,29 +4,32 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
 export const metadata: Metadata = {
-    title: 'BTL Engineering | Precision Engineering Excellence',
+    title: 'BTL | Automotive & Aerospace Precision Components | Hosur, Tamil Nadu',
     description:
-        'BTL Engineering is an ISO 9001:2015 certified precision engineering company supplying OEM and Aerospace customers with strong design, development, and manufacturing capabilities based in Hosur, India.',
+        'Established in 2024 in Hosur, Tamil Nadu, BTL manufactures precision automotive and aerospace components in Steel, Aluminium, and Stainless Steel (SS) with CNC, VMC, drilling, in-house tool room, and complete inspection.',
     keywords: [
-        'BTL Engineering',
+        'BTL',
+        'BTL Hosur',
         'precision engineering',
-        'OEM supplier',
-        'aerospace components',
         'automotive components',
-        'industrial manufacturing',
-        'ISO 9001:2015',
-        'Hosur India',
-        'precision machining',
-        'design engineering',
+        'aerospace components',
+        'CNC Machines',
+        'VMC Milling Machines',
+        'Drilling Machines',
+        'In-house Tool Room',
+        'Complete Component Inspection',
+        'Weld Shop Fabrication',
+        'Steel Aluminium Stainless Steel',
+        'Hosur Tamil Nadu India',
     ],
-    authors: [{ name: 'BTL Engineering' }],
+    authors: [{ name: 'BTL' }],
     openGraph: {
-        title: 'BTL Engineering | Precision Engineering Excellence',
+        title: 'BTL | Automotive & Aerospace Precision Components',
         description:
-            'ISO 9001:2015 certified precision engineering company serving OEM and Aerospace customers.',
+            'Established in 2024 in Hosur, Tamil Nadu. Manufacturing precision automotive and aerospace components.',
         type: 'website',
         locale: 'en_IN',
-        siteName: 'BTL Engineering',
+        siteName: 'BTL',
     },
     robots: {
         index: true,
