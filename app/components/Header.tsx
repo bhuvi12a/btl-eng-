@@ -54,15 +54,15 @@ export default function Header() {
                     <Link
                         href="/"
                         onClick={closeMobileMenu}
-                        className="flex items-center -my-2"
+                        className="flex items-center py-1"
                     >
                         <Image
-                            src="/btl-logo-new.png"
+                            src="/btl-logo-cropped.png"
                             alt="BTL"
-                            width={200}
-                            height={60}
+                            width={160}
+                            height={78}
                             priority
-                            className="w-[160px] lg:w-[200px] h-auto object-contain"
+                            className="w-[115px] sm:w-[130px] lg:w-[155px] h-auto object-contain"
                         />
                     </Link>
 

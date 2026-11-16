@@ -24,7 +24,7 @@ export default function Home() {
                             Company Profile • Established 2024
                         </div>
                         <h2 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight mb-6">
-                            BTL Precision Engineering
+                            BTL Engineering
                         </h2>
                         <p className="text-lg md:text-xl text-slate-600 leading-relaxed">
                             Established in <strong>2024</strong> in <strong>Hosur, Tamil Nadu, India</strong>, BTL is a premier precision manufacturer delivering high-reliability <strong>automotive and aerospace components</strong> to global OEMs.
@@ -92,7 +92,7 @@ export default function Home() {
                             <p className="text-slate-600 leading-relaxed mb-4">
                                 Vertical Machining Centers (VMC) equipped for complex 3D surface profiles, prismatic aerospace components, and automotive housings.
                             </p>
-                            <span className="inline-flex text-xs font-semibold px-2.5 py-1 rounded bg-sky-50 text-sky-700">Multi-axis contouring</span>
+                            <span className="inline-flex text-xs font-semibold px-2.5 py-1 rounded bg-sky-50 text-sky-700">Fourth-axis contouring</span>
                         </div>
 
                         <div className="p-8 rounded-2xl bg-white border border-sky-100 shadow-sm hover:shadow-xl hover:border-blue-200 transition-all duration-300">
@@ -121,7 +121,7 @@ export default function Home() {
                         <p className="text-lg text-slate-600">Integrated manufacturing ecosystem from initial concept design to final 100% component inspection.</p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="grid md:grid-cols-3 gap-8">
                         <div className="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-lg hover:border-sky-200 transition-all">
                             <div className="w-12 h-12 bg-sky-100 text-sky-700 rounded-xl flex items-center justify-center font-bold text-xl mb-4">01</div>
                             <h3 className="text-xl font-bold text-slate-900 mb-2">In-house Tool Room</h3>
@@ -140,14 +140,6 @@ export default function Home() {
 
                         <div className="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-lg hover:border-sky-200 transition-all">
                             <div className="w-12 h-12 bg-sky-100 text-sky-700 rounded-xl flex items-center justify-center font-bold text-xl mb-4">03</div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">Weld Shop / Fabrication</h3>
-                            <p className="text-slate-600 text-sm leading-relaxed">
-                                MIG, TIG, and spot welding capabilities paired with structural metal fabrication and assembly for robust assemblies.
-                            </p>
-                        </div>
-
-                        <div className="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-lg hover:border-sky-200 transition-all">
-                            <div className="w-12 h-12 bg-sky-100 text-sky-700 rounded-xl flex items-center justify-center font-bold text-xl mb-4">04</div>
                             <h3 className="text-xl font-bold text-slate-900 mb-2">Complete Component Inspection</h3>
                             <p className="text-slate-600 text-sm leading-relaxed">
                                 100% QA verification with digital height gauges, optical measuring systems, surface roughness testers, and calibrated metrology.
@@ -163,7 +155,7 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center max-w-3xl mx-auto mb-16">
                         <span className="text-sky-600 font-semibold tracking-wider uppercase text-sm">Material Expertise</span>
-                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2 mb-4">Materials We Machine & Fabricate</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2 mb-4">Materials We Machine</h2>
                         <p className="text-lg text-slate-600">Processed with certified raw material traceability to meet automotive and aerospace certifications.</p>
                     </div>
 

@@ -15,6 +15,7 @@ const navLinks: NavLink[] = [
     { label: 'Company', href: '/about' },
     { label: 'Services', href: '/services' },
     { label: 'Industries', href: '/industries' },
+    { label: 'Attendance', href: '/attendance' },
     { label: 'Testimonials', href: '/testimonials' },
     { label: 'Contact', href: '/contact' },
 ];
@@ -23,6 +24,10 @@ export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState<boolean>(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
     const pathname = usePathname();
+
+    if (pathname?.startsWith('/erp')) {
+        return null;
+    }
 
     useEffect(() => {
         const handleScroll = (): void => {
@@ -54,15 +59,15 @@ export default function Navbar() {
                     <Link
                         href="/"
                         onClick={closeMobileMenu}
-                        className="flex items-center -my-2"
+                        className="flex items-center py-1"
                     >
                         <Image
-                            src="/btl-logo-new.png"
+                            src="/btl-logo-cropped.png"
                             alt="BTL"
-                            width={150}
-                            height={45}
+                            width={160}
+                            height={78}
                             priority
-                            className="w-[120px] lg:w-[150px] h-auto object-contain"
+                            className="w-[115px] sm:w-[130px] lg:w-[155px] h-auto object-contain"
                         />
                     </Link>
 

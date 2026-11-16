@@ -3,8 +3,8 @@ import Image from 'next/image';
 
 export default function Hero() {
     return (
-        <section id="home" className="pt-52 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-sky-100 via-white to-sky-50 min-h-[90vh] flex items-center border-b border-sky-100">
-            <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <section id="home" className="pt-28 sm:pt-36 lg:pt-32 pb-12 lg:pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-sky-100 via-white to-sky-50 min-h-[85vh] flex items-center border-b border-sky-100">
+            <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
                 <div className="max-w-3xl">
                     <div className="flex flex-wrap items-center gap-2 mb-6">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-200 text-blue-800 font-medium text-sm shadow-sm">
@@ -19,25 +19,25 @@ export default function Hero() {
                         </span>
                     </div>
 
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-slate-900 tracking-tight mb-8 leading-[1.1] sm:leading-[1.1]">
+                    <h1 className="text-3xl sm:text-5xl md:text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight mb-6 leading-[1.15]">
                         Precision Components for <span className="text-sky-500 block sm:inline">Automotive & Aerospace</span>
                     </h1>
 
-                    <p className="text-xl text-slate-600 mb-8 leading-relaxed max-w-2xl">
+                    <p className="text-lg sm:text-xl text-slate-600 mb-8 leading-relaxed max-w-2xl">
                         BTL manufactures mission-critical automotive and aerospace components using premium <strong>Steel, Aluminium, and Stainless Steel (SS)</strong> with advanced CNC, VMC milling, and drilling capabilities.
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-8">
-                        <Link href="/services" className="btn-primary py-4 px-8 text-lg bg-orange-600 hover:bg-orange-500 border-none shadow-lg shadow-orange-900/20 text-center">
+                        <Link href="/services" className="btn-primary py-3.5 px-8 text-base sm:text-lg bg-orange-600 hover:bg-orange-500 border-none shadow-lg shadow-orange-900/20 text-center">
                             Explore Capabilities
                         </Link>
-                        <Link href="/contact" className="px-8 py-4 bg-white text-blue-600 font-bold text-lg rounded-lg border border-blue-100 hover:bg-blue-50 transition-colors shadow-sm text-center">
+                        <Link href="/contact" className="px-8 py-3.5 bg-white text-blue-600 font-bold text-base sm:text-lg rounded-lg border border-blue-100 hover:bg-blue-50 transition-colors shadow-sm text-center">
                             Contact Sales
                         </Link>
                     </div>
 
                     {/* Quick Stats Badges */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-6 border-t border-sky-100 text-slate-700 text-sm">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-4 border-t border-sky-100 text-slate-700 text-sm">
                         <div className="bg-white/80 p-3 rounded-lg border border-sky-100 shadow-sm">
                             <span className="block text-2xl font-bold text-sky-600">2024</span>
                             <span className="text-xs text-slate-500">Established</span>
@@ -58,12 +58,23 @@ export default function Hero() {
                 </div>
 
                 {/* Hero Image / Graphic */}
-                <div className="hidden lg:block relative h-full min-h-[500px] bg-slate-900/50 rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-                    <Image src="/automotive-parts.png" alt="Precision Automotive & Aerospace Parts by BTL" fill className="object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
-                    <div className="absolute bottom-6 left-6 text-white font-medium">
-                        <span className="block text-sm text-blue-400 mb-1">Precision Manufacturing in Hosur</span>
-                        Automotive & Aerospace Components
+                <div className="w-full">
+                    <div className="relative w-full aspect-[3/2] bg-[#1b1c20] rounded-2xl border border-slate-700/50 shadow-2xl overflow-hidden group">
+                        <Image 
+                            src="/btl-precision-parts.jpg" 
+                            alt="Precision Machined Automotive & Aerospace Components by BTL" 
+                            fill 
+                            priority
+                            className="object-contain transition-transform duration-500 group-hover:scale-[1.02]" 
+                            sizes="(max-width: 1024px) 100vw, 50vw"
+                        />
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-500 px-1 font-medium">
+                        <span className="inline-flex items-center gap-1.5 text-slate-700">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            CNC Turned & Milled OEM Components
+                        </span>
+                        <span>Hosur, Tamil Nadu</span>
                     </div>
                 </div>
             </div>

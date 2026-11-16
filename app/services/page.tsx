@@ -65,12 +65,12 @@ export default function ServicesPage() {
                             </div>
                             <h3 className="text-2xl font-bold text-slate-900 mb-3">VMC Milling Machines</h3>
                             <p className="text-slate-600 leading-relaxed mb-6">
-                                Vertical Machining Centers (VMC) providing multi-axis capability for complex 3D contouring, pocketing, facing, and intricate aerospace geometries.
+                                Vertical Machining Centers (VMC) providing fourth-axis capability for complex 3D contouring, pocketing, facing, and intricate aerospace geometries.
                             </p>
                             <div className="border-t border-slate-200 pt-4">
                                 <h4 className="font-semibold text-slate-800 text-sm mb-2">Key Applications:</h4>
                                 <ul className="text-sm text-slate-600 space-y-1.5">
-                                    <li className="flex items-center gap-2">✓ Multi-Axis Prismatic Milling</li>
+                                    <li className="flex items-center gap-2">✓ Fourth-Axis Prismatic Milling</li>
                                     <li className="flex items-center gap-2">✓ 3D Surface Profiling</li>
                                     <li className="flex items-center gap-2">✓ Brackets, Mounts & Enclosures</li>
                                     <li className="flex items-center gap-2">✓ Mirror & Fine Surface Finishes</li>
@@ -149,28 +149,10 @@ export default function ServicesPage() {
                             </div>
                         </div>
 
-                        {/* Weld Shop / Fabrication */}
-                        <div className="bg-white p-8 rounded-2xl border border-sky-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row gap-6 items-start">
-                            <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 font-bold text-xl flex items-center justify-center flex-shrink-0">
-                                03
-                            </div>
-                            <div>
-                                <h3 className="text-2xl font-bold text-slate-900 mb-2">Weld Shop / Fabrication</h3>
-                                <p className="text-slate-600 leading-relaxed mb-4">
-                                    Complete welding and sheet metal fabrication bay with MIG, TIG, and spot welding capabilities. We build durable structural brackets, enclosures, and fabricated assemblies.
-                                </p>
-                                <div className="flex flex-wrap gap-2 text-xs font-semibold text-blue-800">
-                                    <span className="bg-blue-50 px-3 py-1 rounded-md">MIG / TIG / Spot Welding</span>
-                                    <span className="bg-blue-50 px-3 py-1 rounded-md">Structural Assembly</span>
-                                    <span className="bg-blue-50 px-3 py-1 rounded-md">Sheet Metal Fabrication</span>
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Complete Component Inspection */}
                         <div className="bg-white p-8 rounded-2xl border border-sky-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row gap-6 items-start">
                             <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 font-bold text-xl flex items-center justify-center flex-shrink-0">
-                                04
+                                03
                             </div>
                             <div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Complete Component Inspection</h3>
@@ -195,7 +177,7 @@ export default function ServicesPage() {
                         <span className="text-blue-600 font-bold uppercase tracking-wider text-sm">Certified Raw Materials</span>
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2 mb-4">Materials Used</h2>
                         <p className="text-slate-600 text-lg">
-                            We machine and fabricate with full heat code traceability across core metals:
+                            We machine with full heat code traceability across core metals:
                         </p>
                     </div>
 

@@ -56,10 +56,10 @@ const testimonials: Testimonial[] = [
         position: "Director of Manufacturing",
         company: "Precision Motors Ltd",
         industry: "Automotive",
-        content: "The sheet metal fabrication quality from BTL is outstanding. Their laser cutting precision and bending accuracy have eliminated our rework completely. The team is responsive, professional, and always delivers on time. A true manufacturing partner.",
+        content: "The precision machining quality from BTL is outstanding. Their CNC turning and milling accuracy have eliminated our rework completely. The team is responsive, professional, and always delivers on time. A true manufacturing partner.",
         rating: 5,
         image: "/testimonials/client4.jpg",
-        projectType: "Chassis & Enclosures"
+        projectType: "Precision Turned Parts"
     },
     {
         id: 5,
@@ -67,7 +67,7 @@ const testimonials: Testimonial[] = [
         position: "R&D Head",
         company: "Innovation Engineering",
         industry: "Aerospace",
-        content: "BTL's R&D support and material testing capabilities are impressive. They helped us validate our new alloy specifications and provided valuable insights for process optimization. Their 3/4/5-axis CNC capabilities handled our most complex designs flawlessly.",
+        content: "BTL's R&D support and material testing capabilities are impressive. They helped us validate our new alloy specifications and provided valuable insights for process optimization. Their fourth-axis CNC capabilities handled our most complex designs flawlessly.",
         rating: 5,
         image: "/testimonials/client5.jpg",
         projectType: "Prototype Development"

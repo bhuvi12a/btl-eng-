@@ -21,7 +21,7 @@ export default function AboutPage() {
                         About <span className="text-blue-600">BTL</span>
                     </h1>
                     <p className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-                        Dedicated manufacturer of high-precision automotive and aerospace components with robust in-house design, tooling, fabrication, and complete component inspection.
+                        Dedicated manufacturer of high-precision automotive and aerospace components with robust in-house design, tooling, CNC/VMC machining, and complete component inspection.
                     </p>
                 </div>
             </section>
@@ -156,7 +156,7 @@ export default function AboutPage() {
                                 Vertical Machining Centers (VMC) capable of complex 3D contouring, pocketing, facing, and profiling in Steel, Aluminium, and Stainless Steel.
                             </p>
                             <ul className="text-sm text-slate-600 space-y-2">
-                                <li className="flex items-center gap-2">✓ Multi-axis precision milling</li>
+                                <li className="flex items-center gap-2">✓ Fourth-axis precision milling</li>
                                 <li className="flex items-center gap-2">✓ Prismatic component machining</li>
                                 <li className="flex items-center gap-2">✓ High surface finish standards</li>
                             </ul>
@@ -195,7 +195,7 @@ export default function AboutPage() {
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="grid md:grid-cols-3 gap-8">
                         {/* Facility 1 */}
                         <div className="bg-slate-50 p-8 rounded-xl shadow-sm border border-slate-200 hover:border-blue-300 transition-all">
                             <div className="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xl font-bold mb-6">
@@ -224,18 +224,6 @@ export default function AboutPage() {
                         <div className="bg-slate-50 p-8 rounded-xl shadow-sm border border-slate-200 hover:border-blue-300 transition-all">
                             <div className="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xl font-bold mb-6">
                                 03
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">Weld Shop / Fabrication</h3>
-                            <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                                Professional welding bays offering MIG, TIG, and spot welding alongside complete sheet metal fabrication and structural assembly.
-                            </p>
-                            <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">Certified Welds & Assembly</span>
-                        </div>
-
-                        {/* Facility 4 */}
-                        <div className="bg-slate-50 p-8 rounded-xl shadow-sm border border-slate-200 hover:border-blue-300 transition-all">
-                            <div className="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xl font-bold mb-6">
-                                04
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-3">Complete Component Inspection</h3>
                             <p className="text-gray-600 text-sm leading-relaxed mb-4">

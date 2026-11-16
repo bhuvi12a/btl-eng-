@@ -1,0 +1,10 @@
+{
+  "erpCloudUrl": "http://localhost:3000",
+  "connectorId": "BTL-WIN-CONNECTOR-01",
+  "connectorSecret": "btl_tally_sec_994821a8c3d2e",
+  "deviceName": "BTL-ACCOUNTS-DESK-01",
+  "tallyHost": "localhost",
+  "tallyPort": 9000,
+  "heartbeatIntervalSeconds": 15
+}
+

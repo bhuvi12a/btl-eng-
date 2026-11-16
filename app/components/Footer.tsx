@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface FooterLink {
     label: string;
@@ -33,7 +34,7 @@ const quickLinks: FooterLink[] = [
 const serviceLinks: FooterLink[] = [
     { label: 'CNC & VMC Machining', href: '/services' },
     { label: 'In-house Tool Room', href: '/services' },
-    { label: 'Weld Shop / Fabrication', href: '/services' },
+    { label: 'Engineering Design', href: '/services' },
     { label: 'Complete Component Inspection', href: '/services' },
 ];
 
@@ -93,6 +94,11 @@ const socialLinks: SocialLink[] = [
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
+    const pathname = usePathname();
+
+    if (pathname?.startsWith('/erp')) {
+        return null;
+    }
 
     return (
         <footer className="bg-orange-50 text-slate-600 border-t border-orange-100">
@@ -101,13 +107,13 @@ export default function Footer() {
                     {/* Company Info Column */}
                     <div className="lg:col-span-1">
                         <Link href="/" className="inline-block mb-6">
-                            <div className="p-2 inline-block">
+                            <div className="inline-block">
                                 <Image
-                                    src="/btl-logo-new.png"
+                                    src="/btl-logo-cropped.png"
                                     alt="BTL"
-                                    width={200}
-                                    height={60}
-                                    className="h-auto w-auto max-w-[200px]"
+                                    width={160}
+                                    height={78}
+                                    className="h-auto w-[130px] lg:w-[160px]"
                                     style={{ mixBlendMode: 'multiply' }}
                                 />
                             </div>

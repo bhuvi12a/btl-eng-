@@ -18,7 +18,7 @@ export const metadata: Metadata = {
         'Drilling Machines',
         'In-house Tool Room',
         'Complete Component Inspection',
-        'Weld Shop Fabrication',
+        'Engineering Design',
         'Steel Aluminium Stainless Steel',
         'Hosur Tamil Nadu India',
     ],
