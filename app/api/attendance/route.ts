@@ -9,12 +9,16 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
     try {
         const currentUser = await getCurrentUser();
+        if (!currentUser) {
+            return NextResponse.json({ success: false, error: 'Unauthorized: Attendance access requires an authenticated session.' }, { status: 401 });
+        }
+
         const { searchParams } = new URL(req.url);
         const dateFilter = searchParams.get('date');
         const employeeCodeFilter = searchParams.get('employee_code');
 
         // Security check: non-admin employees can only view their own attendance
-        const isAdminOrHR = currentUser && ['super_admin', 'admin', 'hr', 'manager'].includes(currentUser.role);
+        const isAdminOrManager = currentUser && ['super_admin', 'admin', 'manager'].includes(currentUser.role);
 
         const conditions = [];
         if (dateFilter) {
@@ -24,8 +28,8 @@ export async function GET(req: NextRequest) {
             conditions.push(eq(attendance.employeeCode, employeeCodeFilter));
         }
 
-        // If not admin/HR and not a global view request, filter by the current user's id if linked
-        if (!isAdminOrHR && currentUser) {
+        // If employee (or unprivileged user), strictly filter by current user's id
+        if (!isAdminOrManager && currentUser) {
             conditions.push(eq(attendance.userId, currentUser.id));
         }
 
@@ -44,7 +48,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({
             success: true,
             records: data,
-            canCorrect: !!isAdminOrHR,
+            canCorrect: currentUser ? ['super_admin', 'admin'].includes(currentUser.role) : false,
             summary: {
                 total,
                 present,

@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
 
 // Hosur SIPCOT Plant Reference Coordinates
 const HOSUR_LAT = 12.7409;
@@ -21,49 +19,71 @@ function calculateDistanceMeters(lat1: number, lon1: number, lat2: number, lon2:
         Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return R * c;
+    return Math.round(R * c);
 }
 
-interface AttendanceLogItem {
+interface PersonalAttendanceHistory {
     id: string;
-    employeeName: string;
-    employeeCode: string;
     date: string;
-    status: string;
-    shift: string;
     checkInTime: string | null;
     checkOutTime: string | null;
     hoursWorked: string;
     overtimeHours: string;
+    status: string;
     gpsVerified: boolean;
 }
 
-export default function EmployeeAttendancePunchPage() {
+export default function EmployeeAttendancePortalPage() {
+    // Current Time & Date State
     const [currentTime, setCurrentTime] = useState<string>('');
     const [currentDate, setCurrentDate] = useState<string>('');
 
+    // Authentication State
+    const [authLoading, setAuthLoading] = useState<boolean>(true);
+    const [currentUser, setCurrentUser] = useState<{
+        id: string;
+        fullName: string;
+        email: string;
+        role: string;
+        employee?: {
+            id: string;
+            employeeCode: string;
+            firstName: string;
+            lastName: string;
+            designation: string;
+            department: string;
+            shift: string;
+        } | null;
+    } | null>(null);
+
+    // Login Form State (for unauthenticated attendance portal access)
+    const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+    const [loginSubmitting, setLoginSubmitting] = useState(false);
+    const [loginError, setLoginError] = useState('');
+
     // GPS & Geofence State
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [accuracy, setAccuracy] = useState<number | null>(null);
     const [distance, setDistance] = useState<number | null>(null);
     const [isWithinGeofence, setIsWithinGeofence] = useState<boolean | null>(null);
     const [gpsError, setGpsError] = useState<string | null>(null);
     const [locating, setLocating] = useState<boolean>(true);
 
-    // Punch Form State
-    const [employeeCode, setEmployeeCode] = useState<string>('');
-    const [employeeName, setEmployeeName] = useState<string>('');
-    const [shift, setShift] = useState<string>('general');
+    // Punch & UI Feedback
     const [submitting, setSubmitting] = useState<boolean>(false);
     const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-    // Today's Recent Plant Punches
-    const [recentPunches, setRecentPunches] = useState<AttendanceLogItem[]>([]);
-    const [todayPunchSummary, setTodayPunchSummary] = useState({
-        total: 0,
-        present: 0,
-        overtimeHours: '0.0',
-        gpsVerifiedCount: 0,
-    });
+    // Today's Punch & Personal History
+    const [todayPunch, setTodayPunch] = useState<{
+        checkInTime: string | null;
+        checkOutTime: string | null;
+        hoursWorked?: string;
+        status?: string;
+        gpsVerified: boolean;
+        date: string;
+    } | null>(null);
+    const [history, setHistory] = useState<PersonalAttendanceHistory[]>([]);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
 
     const showToast = (text: string, type: 'success' | 'error' = 'success') => {
         setToast({ text, type });
@@ -74,56 +94,60 @@ export default function EmployeeAttendancePunchPage() {
     useEffect(() => {
         const updateClock = () => {
             const now = new Date();
-            setCurrentTime(
-                now.toLocaleTimeString('en-IN', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: true,
-                })
-            );
-            setCurrentDate(
-                now.toLocaleDateString('en-IN', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                })
-            );
+            setCurrentTime(now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }));
+            setCurrentDate(now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
         };
         updateClock();
         const timer = setInterval(updateClock, 1000);
         return () => clearInterval(timer);
     }, []);
 
-    // Fetch Today's Recent Attendance Feed
-    const fetchRecentAttendance = async () => {
+    // Check Current User Auth
+    const checkAuth = async () => {
+        setAuthLoading(true);
         try {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const res = await fetch(`/api/attendance?date=${todayStr}`);
+            const res = await fetch('/api/auth/me');
             const data = await res.json();
-            if (data.success) {
-                setRecentPunches(data.records || []);
-                if (data.summary) {
-                    setTodayPunchSummary(data.summary);
-                }
+            if (data.authenticated && data.user) {
+                setCurrentUser(data.user);
+                fetchPersonalAttendance();
+            } else {
+                setCurrentUser(null);
             }
         } catch {
-            // Silently ignore feed error
+            setCurrentUser(null);
+        } finally {
+            setAuthLoading(false);
+        }
+    };
+
+    const fetchPersonalAttendance = async () => {
+        try {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const res = await fetch('/api/attendance');
+            const data = await res.json();
+            if (data.success && data.records) {
+                setHistory(data.records);
+                const todayRec = data.records.find((r: any) => r.date === todayStr);
+                if (todayRec) {
+                    setTodayPunch(todayRec);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to fetch personal attendance records:', e);
         }
     };
 
     useEffect(() => {
-        fetchRecentAttendance();
+        checkAuth();
     }, []);
 
-    // Get GPS Location
+    // Fetch GPS Location
     const fetchLocation = () => {
         setLocating(true);
         setGpsError(null);
-
         if (!navigator.geolocation) {
-            setGpsError('Geolocation is not supported by your browser or device.');
+            setGpsError('Geolocation is not supported by your browser.');
             setLocating(false);
             return;
         }
@@ -132,351 +156,391 @@ export default function EmployeeAttendancePunchPage() {
             (pos) => {
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
+                const acc = Math.round(pos.coords.accuracy);
                 setLocation({ lat, lng });
+                setAccuracy(acc);
 
                 const dist = calculateDistanceMeters(lat, lng, HOSUR_LAT, HOSUR_LNG);
-                setDistance(Math.round(dist));
+                setDistance(dist);
                 setIsWithinGeofence(dist <= GEOFENCE_RADIUS_METERS);
                 setLocating(false);
             },
             (err) => {
-                let msg = 'Failed to retrieve GPS location.';
-                if (err.code === err.PERMISSION_DENIED) {
-                    msg = 'Location permission was denied. Please allow location access in your browser settings to verify you are at the plant.';
-                } else if (err.code === err.POSITION_UNAVAILABLE) {
-                    msg = 'GPS signal unavailable. Please ensure your device GPS is turned on.';
-                } else if (err.code === err.TIMEOUT) {
-                    msg = 'GPS request timed out. Please retry.';
-                }
-                setGpsError(msg);
+                setGpsError(err.message || 'Unable to retrieve your location.');
                 setLocating(false);
             },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0,
-            }
+            { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
         );
     };
 
     useEffect(() => {
-        fetchLocation();
-    }, []);
-
-    // Handle Punch In or Out
-    const handlePunch = async (punchType: 'IN' | 'OUT') => {
-        if (!employeeCode.trim() || !employeeName.trim()) {
-            showToast('Please enter your Employee Code and Full Name.', 'error');
-            return;
+        if (currentUser) {
+            fetchLocation();
         }
+    }, [currentUser]);
 
-        setSubmitting(true);
+    // Handle Employee Login
+    const handleEmployeeLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoginSubmitting(true);
+        setLoginError('');
+
         try {
-            const res = await fetch('/api/attendance/punch', {
+            const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    employeeCode: employeeCode.trim().toUpperCase(),
-                    employeeName: employeeName.trim(),
-                    shift,
-                    punchType,
-                    latitude: location?.lat || null,
-                    longitude: location?.lng || null,
+                    username: loginForm.username.trim(),
+                    email: loginForm.username.trim(),
+                    password: loginForm.password,
                 }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                await checkAuth();
+            } else {
+                setLoginError(data.error || 'Invalid employee username or password.');
+            }
+        } catch {
+            setLoginError('Failed to connect to authentication server.');
+        } finally {
+            setLoginSubmitting(false);
+        }
+    };
+
+    // Handle Employee Logout
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+        } catch {}
+        setCurrentUser(null);
+    };
+
+    // Fast One-Tap GPS Punch (No Video Delay)
+    const triggerPunch = async (punchType: 'check_in' | 'check_out') => {
+        setSubmitting(true);
+
+        try {
+            const payload = {
+                punchType,
+                latitude: location ? location.lat : null,
+                longitude: location ? location.lng : null,
+                gpsAccuracy: accuracy || null,
+            };
+
+            const res = await fetch('/api/attendance/punch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
             });
 
             const data = await res.json();
             if (data.success) {
                 showToast(
-                    `Punch ${punchType} Recorded! In: ${data.record.checkInTime || '—'} | Out: ${data.record.checkOutTime || '—'} (${data.record.hoursWorked}h)`
+                    `${punchType === 'check_in' ? 'Check-In' : 'Check-Out'} logged at ${data.record.time}!`,
+                    'success'
                 );
-                fetchRecentAttendance();
+                fetchPersonalAttendance();
             } else {
-                showToast(data.error || 'Failed to submit punch', 'error');
+                showToast(data.error || 'Attendance punch rejected.', 'error');
             }
         } catch {
-            showToast('Network error while connecting to attendance server', 'error');
+            showToast('Network error while recording punch.', 'error');
         } finally {
             setSubmitting(false);
         }
     };
 
+    // Unauthenticated View: Direct Employee Login
+    if (!authLoading && !currentUser) {
+        return (
+            <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4">
+                <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6">
+                    <div className="text-center space-y-2">
+                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600/20 text-blue-400 text-2xl border border-blue-500/30">
+                            ⏱️
+                        </div>
+                        <h1 className="text-xl font-bold text-white tracking-wide">BTL Employee Attendance Portal</h1>
+                        <p className="text-xs text-slate-400">
+                            One-tap plant punch kiosk with GPS location verification.
+                        </p>
+                    </div>
+
+                    {loginError && (
+                        <div className="p-3.5 rounded-2xl bg-rose-950/80 border border-rose-800 text-rose-200 text-xs text-center font-medium">
+                            {loginError}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleEmployeeLogin} className="space-y-4 text-xs">
+                        <div>
+                            <label className="block text-slate-300 font-semibold mb-1.5">Employee ID or Email</label>
+                            <input
+                                type="text"
+                                required
+                                value={loginForm.username}
+                                onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
+                                placeholder="e.g. BTL-TEST-3574 or username"
+                                className="w-full bg-slate-800/90 border border-slate-700 rounded-2xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm font-medium"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-slate-300 font-semibold mb-1.5">Password</label>
+                            <input
+                                type="password"
+                                required
+                                value={loginForm.password}
+                                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                                placeholder="••••••••"
+                                className="w-full bg-slate-800/90 border border-slate-700 rounded-2xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm"
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loginSubmitting}
+                            className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-bold text-sm shadow-lg shadow-blue-900/40 transition-all disabled:opacity-50"
+                        >
+                            {loginSubmitting ? 'Verifying Credentials...' : 'Sign In to Attendance Portal'}
+                        </button>
+                    </form>
+
+                    <div className="pt-4 border-t border-slate-800 text-center text-[11px] text-slate-500">
+                        Employees: Contact your Plant Administrator or HR Manager to obtain or reset your portal credentials.
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const employeeData = currentUser?.employee;
+    const displayName = employeeData ? `${employeeData.firstName} ${employeeData.lastName}` : currentUser?.fullName || 'Employee';
+    const displayCode = employeeData?.employeeCode || `ID-${currentUser?.id.substring(0, 8).toUpperCase()}`;
+    const displayShift = employeeData?.shift || 'General (08:30 - 17:30)';
+
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col justify-between">
-            {/* Toast Notification */}
+        <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+            {/* Toast Feedback */}
             {toast && (
                 <div
-                    className={`fixed top-24 right-5 z-50 px-5 py-3.5 rounded-2xl shadow-xl border text-xs font-semibold flex items-center gap-3 transition-all ${
-                        toast.type === 'error'
-                            ? 'bg-rose-50 border-rose-200 text-rose-800'
-                            : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-4 duration-300 ${
+                        toast.type === 'success'
+                            ? 'bg-emerald-600 text-white border border-emerald-400'
+                            : 'bg-rose-600 text-white border border-rose-400'
                     }`}
                 >
-                    <span className="text-base">{toast.type === 'error' ? '⚠️' : '✅'}</span>
+                    <span>{toast.type === 'success' ? '✓' : '⚠️'}</span>
                     <span>{toast.text}</span>
                 </div>
             )}
 
-            {/* Top Sub-Bar Under Main Navbar */}
-            <div className="pt-24 pb-6 bg-gradient-to-b from-sky-50/70 to-slate-50 border-b border-sky-100">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200 mb-2">
-                            <span>📍</span>
-                            <span>BTL Hosur Manufacturing Facility • SIPCOT Phase 1</span>
-                        </div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                            Employee Self-Attendance Portal
-                        </h1>
-                        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                            GPS-geofenced mobile check-in & check-out for CNC machinists, engineers, and plant personnel
-                        </p>
+            {/* Portal Header */}
+            <header className="px-4 py-3 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center font-black text-white text-base shadow-md shadow-blue-900/40">
+                        BTL
                     </div>
-
-                    {/* ERP Admin Login Shortcut */}
-                    <div className="flex items-center gap-2">
-                        <Link
-                            href="/erp/users"
-                            className="text-xs font-semibold text-slate-700 hover:text-blue-600 px-3.5 py-2 rounded-xl bg-white border border-slate-200 shadow-sm hover:border-blue-300 transition-all"
-                        >
-                            🔐 Master Register & Admin Corrections →
-                        </Link>
+                    <div>
+                        <div className="font-extrabold text-base tracking-wide text-white flex items-center gap-2">
+                            <span>{displayName}</span>
+                            <span className="font-mono text-xs font-bold text-blue-400 bg-blue-950/80 px-2.5 py-0.5 rounded-full border border-blue-800">
+                                {displayCode}
+                            </span>
+                        </div>
+                        <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+                            <span>🕒 Shift: {displayShift}</span>
+                            {employeeData?.designation && <span>• {employeeData.designation}</span>}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Main Content Area */}
-            <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    {/* LEFT / CENTER: Punch Card (7 Cols) */}
-                    <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-                        {/* Live Digital Clock */}
-                        <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white text-center shadow-md">
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-200 block">
-                                Live Plant Clock
-                            </span>
-                            <div className="text-4xl sm:text-5xl font-black tracking-tight font-mono my-1">
-                                {currentTime || '00:00:00 AM'}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowHistoryModal(true)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors flex items-center gap-1.5"
+                    >
+                        <span>📜</span>
+                        <span className="hidden sm:inline">My History</span>
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        className="px-3 py-1.5 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-300 text-xs font-semibold border border-rose-800 transition-colors flex items-center gap-1"
+                    >
+                        <span>Sign Out</span>
+                    </button>
+                </div>
+            </header>
+
+            {/* Main Punch Kiosk Area */}
+            <main className="flex-1 max-w-lg w-full mx-auto p-4 flex flex-col justify-center gap-5">
+                {/* Real-time Clock Card */}
+                <div className="bg-slate-900/90 border border-slate-800/80 rounded-3xl p-6 shadow-2xl text-center space-y-2">
+                    <div className="text-4xl sm:text-5xl font-black text-white font-mono tracking-tight">{currentTime || '--:--:--'}</div>
+                    <div className="text-sm text-slate-400 font-medium">{currentDate || 'Loading date...'}</div>
+                </div>
+
+                {/* GPS Geofence Location Card */}
+                <div className="bg-slate-900/90 border border-slate-800/80 rounded-3xl p-6 shadow-2xl space-y-3">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xl">📍</span>
+                            <div>
+                                <div className="text-xs font-semibold text-slate-400">Hosur Plant GPS Verification</div>
+                                <div className="text-sm font-bold text-white">SIPCOT Industrial Complex</div>
                             </div>
-                            <div className="text-xs text-blue-100 font-medium">{currentDate}</div>
                         </div>
 
-                        {/* GPS Radar Status */}
-                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2">
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                                    <span>📍</span>
-                                    <span>Hosur Plant Geofence Status</span>
-                                </span>
-                                <button
-                                    onClick={fetchLocation}
-                                    disabled={locating}
-                                    className="text-[11px] text-blue-600 hover:text-blue-700 font-semibold underline disabled:opacity-50"
-                                >
-                                    {locating ? 'Scanning GPS...' : 'Refresh GPS'}
-                                </button>
-                            </div>
-
+                        {/* Geofence Status Badge */}
+                        <div>
                             {locating ? (
-                                <div className="text-xs text-slate-500 flex items-center gap-2 py-1">
-                                    <span className="animate-spin text-blue-600">🌀</span>
-                                    <span>Verifying device distance from Hosur plant...</span>
-                                </div>
-                            ) : gpsError ? (
-                                <div className="text-xs text-rose-700 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
-                                    ⚠️ {gpsError}
-                                </div>
+                                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-950/70 text-amber-300 border border-amber-800 animate-pulse">
+                                    <span className="w-2 h-2 rounded-full bg-amber-400" />
+                                    Locating...
+                                </span>
+                            ) : isWithinGeofence ? (
+                                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-950/90 text-emerald-300 border border-emerald-600">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                                    Inside Plant (≤500m)
+                                </span>
                             ) : (
-                                <div className="space-y-1.5 text-xs">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-slate-500">Distance to Hosur Facility:</span>
-                                        <span className="font-mono font-bold text-slate-800">
-                                            {distance !== null ? `${distance} meters` : 'Calculating...'}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
-                                        <span className="text-slate-500">Geofence Status:</span>
-                                        {isWithinGeofence ? (
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                <span>✓</span> Verified On-Premises (&lt; 500m)
+                                <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-rose-950/90 text-rose-300 border border-rose-700">
+                                    <span className="w-2 h-2 rounded-full bg-rose-400" />
+                                    Outside Plant ({distance ? `${distance}m away` : 'No GPS'})
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs text-slate-400 font-mono">
+                        <div>
+                            {location ? (
+                                <span>GPS: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}</span>
+                            ) : (
+                                <span>GPS coordinates acquiring...</span>
+                            )}
+                        </div>
+                        {accuracy && (
+                            <div>Accuracy: ±{accuracy}m</div>
+                        )}
+                    </div>
+
+                    {gpsError && (
+                        <div className="p-3 rounded-2xl bg-amber-950/40 border border-amber-800/60 text-xs text-amber-200">
+                            ⚠️ {gpsError}
+                        </div>
+                    )}
+                </div>
+
+                {/* Large Check-In and Check-Out Action Buttons */}
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                    <button
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => triggerPunch('check_in')}
+                        className="py-6 px-4 rounded-3xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-black text-base shadow-xl shadow-emerald-950/50 flex flex-col items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:pointer-events-none"
+                    >
+                        <span className="text-3xl">🟢</span>
+                        <span>CHECK IN</span>
+                        <span className="text-[11px] font-normal text-emerald-100 font-sans">Start Shift</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => triggerPunch('check_out')}
+                        className="py-6 px-4 rounded-3xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-black text-base shadow-xl shadow-rose-950/50 flex flex-col items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:pointer-events-none"
+                    >
+                        <span className="text-3xl">🔴</span>
+                        <span>CHECK OUT</span>
+                        <span className="text-[11px] font-normal text-rose-100 font-sans">End Shift</span>
+                    </button>
+                </div>
+
+                {/* Today's Punch Status Badge */}
+                {todayPunch ? (
+                    <div className="p-4 rounded-3xl bg-slate-900 border border-slate-800 text-xs text-center font-mono">
+                        <span className="text-slate-400">Today: </span>
+                        <span className="text-emerald-400 font-bold">In: {todayPunch.checkInTime || '—'}</span>
+                        <span className="text-slate-600"> | </span>
+                        <span className="text-blue-400 font-bold">Out: {todayPunch.checkOutTime || 'Pending'}</span>
+                        {todayPunch.gpsVerified && (
+                            <span className="text-indigo-400 font-semibold ml-2">📍 GPS Verified</span>
+                        )}
+                    </div>
+                ) : (
+                    <div className="p-4 rounded-3xl bg-slate-900/60 border border-slate-800/60 text-xs text-slate-500 text-center">
+                        No punch recorded yet today. Tap Check-In to start your shift.
+                    </div>
+                )}
+            </main>
+
+            {/* Modal: Read-Only Personal Attendance History */}
+            {showHistoryModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden shadow-2xl">
+                        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                            <div>
+                                <h3 className="font-bold text-white text-sm">Personal Attendance History</h3>
+                                <p className="text-[11px] text-slate-400">Past punch records for {displayName}</p>
+                            </div>
+                            <button
+                                onClick={() => setShowHistoryModal(false)}
+                                className="text-slate-400 hover:text-white text-base p-1"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                            {history.length === 0 ? (
+                                <div className="py-8 text-center text-xs text-slate-500">No past punch records found.</div>
+                            ) : (
+                                history.map((rec) => (
+                                    <div
+                                        key={rec.id}
+                                        className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-between text-xs"
+                                    >
+                                        <div>
+                                            <div className="font-bold text-white">{rec.date}</div>
+                                            <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                                                In: {rec.checkInTime || '—'} | Out: {rec.checkOutTime || '—'}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span
+                                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                                    rec.status === 'present'
+                                                        ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                                                        : 'bg-amber-950 text-amber-300 border border-amber-800'
+                                                }`}
+                                            >
+                                                {rec.status.toUpperCase()}
                                             </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                                <span>⚠️</span> Outside Plant Radius ({distance}m)
-                                            </span>
-                                        )}
+                                            {rec.gpsVerified && (
+                                                <div className="text-[10px] text-indigo-400 mt-1">📍 Geofence OK</div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+                                ))
                             )}
                         </div>
 
-                        {/* Punch Form */}
-                        <div className="space-y-4 text-xs">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block font-semibold text-slate-700 mb-1">
-                                        Employee Code *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        placeholder="e.g. BTL-001"
-                                        value={employeeCode}
-                                        onChange={(e) => setEmployeeCode(e.target.value.toUpperCase())}
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono font-bold text-blue-700 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block font-semibold text-slate-700 mb-1">
-                                        Full Name *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        placeholder="e.g. Ramesh Kumar"
-                                        value={employeeName}
-                                        onChange={(e) => setEmployeeName(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block font-semibold text-slate-700 mb-1">
-                                    Work Shift
-                                </label>
-                                <select
-                                    value={shift}
-                                    onChange={(e) => setShift(e.target.value)}
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-600 focus:bg-white"
-                                >
-                                    <option value="general">General Shift (08:30 AM - 05:30 PM)</option>
-                                    <option value="shift_1">Shift 1 (06:00 AM - 02:00 PM)</option>
-                                    <option value="shift_2">Shift 2 (02:00 PM - 10:00 PM)</option>
-                                    <option value="night">Night Shift (10:00 PM - 06:00 AM)</option>
-                                </select>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="grid grid-cols-2 gap-3 pt-2">
-                                <button
-                                    type="button"
-                                    disabled={submitting}
-                                    onClick={() => handlePunch('IN')}
-                                    className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-700/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                                >
-                                    <span className="text-lg">🟢</span>
-                                    <span>Punch IN (Shift Start)</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={submitting}
-                                    onClick={() => handlePunch('OUT')}
-                                    className="w-full py-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md shadow-rose-700/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                                >
-                                    <span className="text-lg">🔴</span>
-                                    <span>Punch OUT (Shift End)</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* RIGHT: Plant Today's Live Attendance Feed (5 Cols) */}
-                    <div className="lg:col-span-5 space-y-6">
-                        {/* Summary Metrics */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
-                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Punches Today</span>
-                                <span className="text-2xl font-bold text-slate-900 font-mono">
-                                    {todayPunchSummary.total}
-                                </span>
-                            </div>
-                            <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 shadow-sm">
-                                <span className="text-[10px] uppercase font-bold text-emerald-700 block">GPS Verified</span>
-                                <span className="text-2xl font-bold text-emerald-800 font-mono">
-                                    {todayPunchSummary.gpsVerifiedCount}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Recent Activity List */}
-                        <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-sm space-y-3">
-                            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                                    Today's Plant Attendance Feed
-                                </h3>
-                                <button
-                                    onClick={fetchRecentAttendance}
-                                    className="text-[11px] text-blue-600 hover:text-blue-700 font-medium"
-                                >
-                                    Refresh
-                                </button>
-                            </div>
-
-                            <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
-                                {recentPunches.length === 0 ? (
-                                    <div className="py-8 text-center text-xs text-slate-400">
-                                        No punches logged yet today. Use the Punch In button to record the first shift.
-                                    </div>
-                                ) : (
-                                    recentPunches.map((item) => (
-                                        <div
-                                            key={item.id}
-                                            className="p-3 rounded-2xl bg-slate-50/70 border border-slate-200/80 text-xs flex items-center justify-between"
-                                        >
-                                            <div>
-                                                <span className="font-bold text-slate-900 block">
-                                                    {item.employeeName}
-                                                </span>
-                                                <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5 font-mono">
-                                                    <span className="text-blue-700 font-bold">{item.employeeCode}</span>
-                                                    <span>•</span>
-                                                    <span className="uppercase">{item.shift}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="text-right font-mono">
-                                                <div className="text-emerald-700 font-bold text-[11px]">
-                                                    In: {item.checkInTime || '—'}
-                                                </div>
-                                                <div className="text-slate-500 text-[10px]">
-                                                    Out: {item.checkOutTime || '—'}
-                                                </div>
-                                                {item.gpsVerified ? (
-                                                    <span className="text-[9px] text-emerald-700 font-semibold block">
-                                                        📍 Verified
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-[9px] text-slate-400 font-medium block">
-                                                        Manual
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Plant Notice */}
-                        <div className="p-4 rounded-2xl bg-sky-50 border border-sky-100 text-xs text-sky-900 space-y-1">
-                            <span className="font-bold block">💡 Hosur Plant Policy</span>
-                            <p className="text-[11px] leading-relaxed text-sky-800">
-                                Employees must submit punches from within the 500m geofence radius. All punches are recorded immutably. For punch discrepancies, contact HR or Plant Administration.
-                            </p>
+                        <div className="p-3 border-t border-slate-800 text-right">
+                            <button
+                                onClick={() => setShowHistoryModal(false)}
+                                className="px-4 py-1.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold"
+                            >
+                                Close
+                            </button>
                         </div>
                     </div>
                 </div>
-            </main>
+            )}
 
-            {/* Footer */}
-            <footer className="py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-500">
-                <div className="max-w-6xl mx-auto px-4">
-                    <span>BTL Precision Engineering • Hosur SIPCOT Industrial Area, Tamil Nadu</span>
-                    <span className="block text-[11px] text-slate-400 mt-1">
-                        High-Reliability Automotive & Aerospace Components Manufacturing
-                    </span>
-                </div>
+            {/* Privacy & Retention Footer */}
+            <footer className="py-3 text-center text-[10px] text-slate-600 border-t border-slate-900">
+                BTL Precision Machining • Fast GPS Location Punch • Authoritative Server Timestamps
             </footer>
         </div>
     );

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { productCategories } from '@/lib/db/schema';
+import { requireAuth } from '@/lib/auth/session';
 import { eq, desc } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -40,6 +41,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const body = await req.json();
         const { name, code, description, imageUrl } = body;
 

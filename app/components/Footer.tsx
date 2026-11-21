@@ -56,8 +56,8 @@ const contactInfo: ContactInfo[] = [
             </svg>
         ),
         label: 'Email',
-        value: 'info@btlengineering.com',
-        href: 'mailto:info@btlengineering.com',
+        value: 'dinakaran@btlengg.com',
+        href: 'mailto:dinakaran@btlengg.com',
     },
     {
         icon: (
@@ -96,7 +96,7 @@ export default function Footer() {
     const currentYear = new Date().getFullYear();
     const pathname = usePathname();
 
-    if (pathname?.startsWith('/erp')) {
+    if (pathname?.startsWith('/erp') || pathname === '/attendance') {
         return null;
     }
 
@@ -213,14 +213,14 @@ export default function Footer() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
                         <p className="text-center md:text-left">
-                            © {currentYear} BTL. All rights reserved. | Made by <a href="https://booworks.co" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:text-orange-700 font-medium transition-colors">booworks.co</a>
+                            © {currentYear} BTL. All rights reserved.
                         </p>
                         <div className="flex items-center gap-6">
-                            <Link href="#" className="hover:text-orange-600 transition-colors">
+                            <Link href="/privacy" className="hover:text-orange-600 transition-colors">
                                 Privacy Policy
                             </Link>
-                            <Link href="#" className="hover:text-orange-600 transition-colors">
-                                Terms of Service
+                            <Link href="/terms" className="hover:text-orange-600 transition-colors">
+                                Terms and Conditions
                             </Link>
                         </div>
                     </div>

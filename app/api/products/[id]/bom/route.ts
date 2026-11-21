@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { billOfMaterials, products } from '@/lib/db/schema';
+import { requireAuth } from '@/lib/auth/session';
 import { eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -10,6 +11,9 @@ export async function GET(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const { id } = await context.params;
 
         const bomItems = await db.query.billOfMaterials.findMany({

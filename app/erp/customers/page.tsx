@@ -14,6 +14,7 @@ interface Customer {
     creditLimit: string;
     paymentTerms: string;
     status: 'active' | 'inactive' | 'lead';
+    notes?: string | null;
     createdAt: string;
 }
 
@@ -25,6 +26,7 @@ export default function CustomersPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
     const [form, setForm] = useState({
         companyName: '',
@@ -198,6 +200,7 @@ export default function CustomersPage() {
                                     <th className="py-3.5 px-4">Location</th>
                                     <th className="py-3.5 px-4">Payment Terms</th>
                                     <th className="py-3.5 px-4">Status</th>
+                                    <th className="py-3.5 px-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -206,7 +209,9 @@ export default function CustomersPage() {
                                         <td className="py-3.5 px-4 font-semibold text-slate-900">{c.companyName}</td>
                                         <td className="py-3.5 px-4 text-slate-700">{c.contactPerson}</td>
                                         <td className="py-3.5 px-4 text-slate-600">
-                                            <div>{c.email}</div>
+                                            <a href={`mailto:${c.email}`} className="text-blue-600 hover:underline font-medium block">
+                                                {c.email}
+                                            </a>
                                             <div className="text-[11px] text-slate-500">{c.phone}</div>
                                         </td>
                                         <td className="py-3.5 px-4 font-mono text-[11px] text-slate-600">
@@ -226,6 +231,14 @@ export default function CustomersPage() {
                                             >
                                                 {c.status.toUpperCase()}
                                             </span>
+                                        </td>
+                                        <td className="py-3.5 px-4 text-right">
+                                            <button
+                                                onClick={() => setSelectedCustomer(c)}
+                                                className="px-2.5 py-1 text-[11px] font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-200 transition-colors"
+                                            >
+                                                View RFQ / Details
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -398,6 +411,79 @@ export default function CustomersPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* View RFQ / Customer Details Modal */}
+            {selectedCustomer && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                    <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+                        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900">{selectedCustomer.companyName}</h3>
+                                <p className="text-xs text-slate-500">
+                                    Status: <span className="uppercase font-semibold text-blue-600">{selectedCustomer.status}</span> • Registered: {new Date(selectedCustomer.createdAt).toLocaleDateString()}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setSelectedCustomer(null)}
+                                className="text-slate-400 hover:text-slate-700 text-xl font-bold p-1"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4 text-xs">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                    <div className="text-slate-400 font-medium mb-1">Contact Person</div>
+                                    <div className="font-semibold text-slate-800 text-sm">{selectedCustomer.contactPerson}</div>
+                                </div>
+                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                    <div className="text-slate-400 font-medium mb-1">Direct Phone</div>
+                                    <div className="font-semibold text-slate-800 text-sm">
+                                        <a href={`tel:${selectedCustomer.phone}`} className="text-blue-600 hover:underline">
+                                            {selectedCustomer.phone}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <div className="text-slate-400 font-medium mb-1">Email Address</div>
+                                <div className="font-semibold text-blue-600 text-sm">
+                                    <a href={`mailto:${selectedCustomer.email}`} className="hover:underline flex items-center gap-1.5">
+                                        <span>✉</span>
+                                        <span>{selectedCustomer.email}</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-amber-50/60 rounded-xl border border-amber-200/80">
+                                <div className="text-amber-800 font-semibold mb-1 flex items-center gap-1.5">
+                                    <span>📝</span>
+                                    <span>Project / RFQ Details & Inquiry Notes</span>
+                                </div>
+                                <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">
+                                    {selectedCustomer.notes || 'No notes or project details attached to this record.'}
+                                </p>
+                            </div>
+
+                            <div className="flex justify-between items-center pt-2">
+                                <a
+                                    href={`mailto:${selectedCustomer.email}?subject=RE: Quote Request - BTL Automotive Engineering`}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-sm inline-flex items-center gap-1.5 transition-colors"
+                                >
+                                    <span>Reply via Email</span>
+                                </a>
+                                <button
+                                    onClick={() => setSelectedCustomer(null)}
+                                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { customers, invoices, customerPayments, creditDebitNotes } from '@/lib/db/schema';
+import { requireAuth } from '@/lib/auth/session';
 import { desc, eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -10,6 +11,9 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const { id } = await params;
 
         // 1. Fetch Customer Master

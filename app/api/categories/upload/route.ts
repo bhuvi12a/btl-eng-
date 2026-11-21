@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/session';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 
@@ -6,6 +7,9 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const formData = await req.formData();
         const file = formData.get('file') as File | null;
 

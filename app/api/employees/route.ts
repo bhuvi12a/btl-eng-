@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { employees, departments, auditLogs } from '@/lib/db/schema';
-import { getCurrentUser } from '@/lib/auth/session';
+import { requireAuth, getCurrentUser } from '@/lib/auth/session';
 import { desc, eq, and } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,10 @@ const SALARY_AUTHORIZED_ROLES = ['super_admin', 'admin', 'hr'];
 
 export async function GET(req: NextRequest) {
     try {
-        const currentUser = await getCurrentUser();
+        const auth = await requireAuth(['super_admin', 'admin', 'manager', 'hr']);
+        if (auth.errorResponse) return auth.errorResponse;
+        const currentUser = auth.user;
+
         const { searchParams } = new URL(req.url);
         const includeArchived = searchParams.get('include_archived') === 'true';
         const departmentId = searchParams.get('department_id');

@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { auditLogs } from '@/lib/db/schema';
+import { requireAuth } from '@/lib/auth/session';
 import { desc } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
+        // Strict Guard: Admin only
+        const auth = await requireAuth(['super_admin', 'admin']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const { searchParams } = new URL(req.url);
         const action = searchParams.get('action');
         const entity = searchParams.get('entity');

@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { suppliers, auditLogs } from '@/lib/db/schema';
 import { createSupplierSchema } from '@/lib/validations/phase2';
-import { getCurrentUser } from '@/lib/auth/session';
+import { requireAuth, getCurrentUser } from '@/lib/auth/session';
 import { ilike, or, eq, desc } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const { searchParams } = new URL(req.url);
         const search = searchParams.get('search') || '';
         const status = searchParams.get('status');
@@ -53,7 +56,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const user = await getCurrentUser();
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+        const user = auth.user;
+
         const body = await req.json();
 
         const parsed = createSupplierSchema.safeParse(body);

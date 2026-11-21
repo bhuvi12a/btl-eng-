@@ -3,8 +3,54 @@ import { db } from '@/lib/db';
 import { invoices, auditLogs } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth/session';
+import { hasModuleAccess } from '@/lib/auth/rbac';
 
 export const dynamic = 'force-dynamic';
+
+export async function GET(
+    req: NextRequest,
+    context: { params: Promise<{ id: string }> }
+) {
+    try {
+        const currentUser = await getCurrentUser();
+        // Optional role check if user is logged in
+        if (currentUser && !hasModuleAccess(currentUser.role, 'sales') && !hasModuleAccess(currentUser.role, 'invoices')) {
+            return NextResponse.json(
+                { success: false, error: 'Forbidden. Insufficient permissions to view invoices.' },
+                { status: 403 }
+            );
+        }
+
+        const { id } = await context.params;
+        if (!id) {
+            return NextResponse.json({ success: false, error: 'Invoice ID is required' }, { status: 400 });
+        }
+
+        const invoice = await db.query.invoices.findFirst({
+            where: eq(invoices.id, id),
+            with: {
+                customer: true,
+                payments: true,
+                notes: true,
+            },
+        });
+
+        if (!invoice) {
+            return NextResponse.json({ success: false, error: 'Invoice not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({
+            success: true,
+            invoice,
+        });
+    } catch (err: any) {
+        console.error('Failed to fetch invoice by ID:', err);
+        return NextResponse.json(
+            { success: false, error: err?.message || 'Failed to fetch invoice' },
+            { status: 500 }
+        );
+    }
+}
 
 export async function PATCH(
     req: NextRequest,

@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { expenses, products, inventoryStock } from '@/lib/db/schema';
+import { requireAuth } from '@/lib/auth/session';
 import { desc, eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const { searchParams } = new URL(req.url);
         const category = searchParams.get('category');
 
@@ -64,6 +68,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const body = await req.json();
         const { title, category, amount, taxAmount, expenseDate, paymentMode, vendorName, invoiceNumber, notes } = body;
 

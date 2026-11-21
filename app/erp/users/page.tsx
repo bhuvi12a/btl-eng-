@@ -61,6 +61,11 @@ export default function ErpUsersPage() {
     const [canViewSalary, setCanViewSalary] = useState(false);
     const [showAddEmpModal, setShowAddEmpModal] = useState(false);
 
+    // Credentials Provision Modal State
+    const [credModalEmp, setCredModalEmp] = useState<Employee | null>(null);
+    const [credForm, setCredForm] = useState({ password: '', confirmPassword: '' });
+    const [credSubmitting, setCredSubmitting] = useState(false);
+
     // Form state for new employee
     const [newEmpForm, setNewEmpForm] = useState({
         employeeCode: `BTL-${Math.floor(100 + Math.random() * 900)}`,
@@ -265,6 +270,53 @@ export default function ErpUsersPage() {
             }
         } catch {
             showToast('Network error while applying correction', 'error');
+        }
+    };
+
+    // Open Credentials Modal
+    const handleOpenCredentials = (emp: Employee) => {
+        setCredModalEmp(emp);
+        setCredForm({ password: '', confirmPassword: '' });
+    };
+
+    // Provision Credentials Handler
+    const handleSaveCredentials = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!credModalEmp) return;
+
+        if (credForm.password.length < 6) {
+            showToast('Password must be at least 6 characters long.', 'error');
+            return;
+        }
+        if (credForm.password !== credForm.confirmPassword) {
+            showToast('Passwords do not match.', 'error');
+            return;
+        }
+
+        setCredSubmitting(true);
+        try {
+            const res = await fetch('/api/employees/credentials', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    employeeId: credModalEmp.id,
+                    username: credModalEmp.employeeCode,
+                    password: credForm.password,
+                    email: credModalEmp.email,
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(`Portal access created! Username: ${credModalEmp.employeeCode}`);
+                setCredModalEmp(null);
+                fetchEmployees();
+            } else {
+                showToast(data.error || 'Failed to provision credentials', 'error');
+            }
+        } catch {
+            showToast('Network error while provisioning credentials', 'error');
+        } finally {
+            setCredSubmitting(false);
         }
     };
 
@@ -476,17 +528,26 @@ export default function ErpUsersPage() {
                                                     )}
                                                 </td>
                                                 <td className="py-3.5 px-4 text-right">
-                                                    <button
-                                                        onClick={() => handleToggleArchive(emp)}
-                                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
-                                                            emp.isArchived
-                                                                ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                                                                : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
-                                                        }`}
-                                                        title="Soft archive or restore without permanent database deletion"
-                                                    >
-                                                        {emp.isArchived ? 'Restore' : 'Archive'}
-                                                    </button>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleOpenCredentials(emp)}
+                                                            className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                                                            title="Provision/Reset Attendance Portal Login"
+                                                        >
+                                                            🔑 Access
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleToggleArchive(emp)}
+                                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
+                                                                emp.isArchived
+                                                                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                                                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
+                                                            }`}
+                                                            title="Soft archive or restore without permanent database deletion"
+                                                        >
+                                                            {emp.isArchived ? 'Restore' : 'Archive'}
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
@@ -1015,6 +1076,86 @@ export default function ErpUsersPage() {
                                     className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm"
                                 >
                                     Apply Correction & Audit
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL: PROVISION EMPLOYEE ATTENDANCE PORTAL CREDENTIALS */}
+            {credModalEmp && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-md p-6 shadow-2xl">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                                    <span>🔑</span>
+                                    <span>Provision Portal Credentials</span>
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    For {credModalEmp.firstName} {credModalEmp.lastName} ({credModalEmp.employeeCode})
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setCredModalEmp(null)}
+                                className="text-slate-400 hover:text-slate-600 text-lg leading-none"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveCredentials} className="mt-4 space-y-4 text-xs">
+                            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                                <div className="text-slate-500">Portal Login Identifier:</div>
+                                <div className="font-mono font-bold text-blue-700 text-sm">{credModalEmp.employeeCode}</div>
+                                <div className="text-[11px] text-slate-400">
+                                    Linked Email: {credModalEmp.email}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-slate-700 font-semibold mb-1">Set Password *</label>
+                                <input
+                                    type="password"
+                                    required
+                                    placeholder="Minimum 6 characters"
+                                    value={credForm.password}
+                                    onChange={(e) => setCredForm({ ...credForm, password: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-800 focus:outline-none focus:border-blue-600"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-slate-700 font-semibold mb-1">Confirm Password *</label>
+                                <input
+                                    type="password"
+                                    required
+                                    placeholder="Re-enter password"
+                                    value={credForm.confirmPassword}
+                                    onChange={(e) => setCredForm({ ...credForm, confirmPassword: e.target.value })}
+                                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-slate-800 focus:outline-none focus:border-blue-600"
+                                />
+                            </div>
+
+                            <p className="text-[11px] text-slate-500 leading-relaxed">
+                                This will grant attendance portal access at <span className="font-mono text-blue-600">/attendance</span> with role <span className="font-semibold text-slate-700">Employee</span>. The employee will not have access to any ERP modules.
+                            </p>
+
+                            <div className="pt-3 flex justify-end gap-2 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setCredModalEmp(null)}
+                                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={credSubmitting}
+                                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm disabled:opacity-50"
+                                >
+                                    {credSubmitting ? 'Saving...' : 'Save Credentials'}
                                 </button>
                             </div>
                         </form>

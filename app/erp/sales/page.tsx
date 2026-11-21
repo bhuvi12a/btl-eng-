@@ -87,6 +87,25 @@ export default function ErpSalesPage() {
 
     // Invoice Print Modal State
     const [printInvoiceData, setPrintInvoiceData] = useState<InvoiceRecord | null>(null);
+    const [isLoadingPrintInvoice, setIsLoadingPrintInvoice] = useState(false);
+
+    // Fetch and open print modal for a specific invoice ID
+    const handleOpenPrintModal = async (invoiceId: string) => {
+        setIsLoadingPrintInvoice(true);
+        try {
+            const res = await fetch(`/api/invoices/${invoiceId}`, { cache: 'no-store' });
+            const data = await res.json();
+            if (data.success && data.invoice) {
+                setPrintInvoiceData(data.invoice);
+            } else {
+                showToast(data.error || 'Failed to load fresh invoice data', 'error');
+            }
+        } catch {
+            showToast('Network error loading invoice bill', 'error');
+        } finally {
+            setIsLoadingPrintInvoice(false);
+        }
+    };
 
     // Direct Invoice Creation Modal State
     const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(false);
@@ -623,22 +642,36 @@ export default function ErpSalesPage() {
 
                                                 {/* PRINT ACTION (Strictly unlocked only when PAID) */}
                                                 <td className="py-4 px-5 text-right">
-                                                    <button
-                                                        onClick={() => {
-                                                            if (inv.status !== 'paid') {
-                                                                showToast(`Cannot print: Bill #${inv.invoiceNumber} is not fully paid yet! (Pending: ₹${parseFloat(inv.balanceDue).toLocaleString('en-IN')})`, 'error');
-                                                                return;
-                                                            }
-                                                            setPrintInvoiceData(inv);
-                                                        }}
-                                                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                                                            inv.status === 'paid'
-                                                                ? 'bg-blue-600 text-white border-transparent hover:bg-blue-700 shadow-sm cursor-pointer'
-                                                                : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-75'
-                                                        }`}
-                                                    >
-                                                        {inv.status === 'paid' ? '🖨️ Print Bill' : '🔒 Unpaid'}
-                                                    </button>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                if (inv.status !== 'paid') {
+                                                                    showToast(`Cannot print: Bill #${inv.invoiceNumber} is not fully paid yet! (Pending: ₹${parseFloat(inv.balanceDue).toLocaleString('en-IN')})`, 'error');
+                                                                    return;
+                                                                }
+                                                                handleOpenPrintModal(inv.id);
+                                                            }}
+                                                            disabled={isLoadingPrintInvoice}
+                                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                                                                inv.status === 'paid'
+                                                                    ? 'bg-blue-600 text-white border-transparent hover:bg-blue-700 shadow-sm cursor-pointer'
+                                                                    : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-75'
+                                                            }`}
+                                                        >
+                                                            {inv.status === 'paid' ? '🖨️ View / Print' : '🔒 Unpaid'}
+                                                        </button>
+                                                        {inv.status === 'paid' && (
+                                                            <a
+                                                                href={`/api/invoices/${inv.id}/pdf`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                                                                title="Download / Open PDF directly"
+                                                            >
+                                                                📄 PDF
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
@@ -803,31 +836,36 @@ export default function ErpSalesPage() {
                                                             )}
                                                         </td>
                                                         <td className="py-3.5 px-5 text-right">
-                                                            <button
-                                                                onClick={() => {
-                                                                    if (inv.status !== 'paid') {
-                                                                        const clientName = selectedCustomerLedger.customer.companyName || 'Customer';
-                                                                        showToast(`Cannot print: Bill #${inv.invoiceNumber} is not fully paid yet!`, 'error');
-                                                                        return;
-                                                                    }
-                                                                    // Ensure invoice has customer attached
-                                                                    const fullInv = {
-                                                                        ...inv,
-                                                                        customer: inv.customer || {
-                                                                            companyName: selectedCustomerLedger.customer.companyName,
-                                                                            gstNumber: selectedCustomerLedger.customer.gstNumber || '',
-                                                                        },
-                                                                    };
-                                                                    setPrintInvoiceData(fullInv);
-                                                                }}
-                                                                className={`px-3 py-1 rounded-xl text-xs font-bold border transition-colors ${
-                                                                    inv.status === 'paid'
-                                                                        ? 'bg-blue-600 text-white border-transparent hover:bg-blue-700'
-                                                                        : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
-                                                                }`}
-                                                            >
-                                                                {inv.status === 'paid' ? '🖨️ Print Bill' : '🔒 Unpaid'}
-                                                            </button>
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        if (inv.status !== 'paid') {
+                                                                            showToast(`Cannot print: Bill #${inv.invoiceNumber} is not fully paid yet!`, 'error');
+                                                                            return;
+                                                                        }
+                                                                        handleOpenPrintModal(inv.id);
+                                                                    }}
+                                                                    disabled={isLoadingPrintInvoice}
+                                                                    className={`px-3 py-1 rounded-xl text-xs font-bold border transition-colors ${
+                                                                        inv.status === 'paid'
+                                                                            ? 'bg-blue-600 text-white border-transparent hover:bg-blue-700'
+                                                                            : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                                                                    }`}
+                                                                >
+                                                                    {inv.status === 'paid' ? '🖨️ View / Print' : '🔒 Unpaid'}
+                                                                </button>
+                                                                {inv.status === 'paid' && (
+                                                                    <a
+                                                                        href={`/api/invoices/${inv.id}/pdf`}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                                                                        title="Download / Open PDF directly"
+                                                                    >
+                                                                        📄 PDF
+                                                                    </a>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))
@@ -1212,10 +1250,10 @@ export default function ErpSalesPage() {
                             <div>
                                 <span className="font-bold text-slate-400 uppercase text-xs block mb-1">Billed To</span>
                                 <div className="font-extrabold text-slate-900 text-base">
-                                    {printInvoiceData.customer?.companyName || 'Apex Automotive Ltd'}
+                                    {printInvoiceData.customer?.companyName || 'Automotive Client'}
                                 </div>
                                 <div className="text-slate-600 font-mono mt-1">
-                                    GSTIN: <b>{printInvoiceData.customer?.gstNumber || '33AAACB9999Z1Z0'}</b>
+                                    GSTIN: <b>{printInvoiceData.customer?.gstNumber || 'None / Unregistered'}</b>
                                 </div>
                             </div>
                         </div>
@@ -1284,21 +1322,33 @@ export default function ErpSalesPage() {
                         </div>
 
                         {/* Print / Close Footer (Hidden while printing) */}
-                        <div className="mt-8 pt-5 border-t border-slate-200 flex justify-end gap-3 print:hidden">
-                            <button
-                                onClick={() => setPrintInvoiceData(null)}
-                                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm"
+                        <div className="mt-8 pt-5 border-t border-slate-200 flex justify-between items-center print:hidden">
+                            <a
+                                href={`/api/invoices/${printInvoiceData.id}/pdf`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm flex items-center gap-2 border border-slate-200"
                             >
-                                Close
-                            </button>
-                            <button
-                                onClick={() => {
-                                    window.print();
-                                }}
-                                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md"
-                            >
-                                🖨️ Print / Download PDF
-                            </button>
+                                <span>📄</span>
+                                <span>Open Dedicated PDF View</span>
+                            </a>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setPrintInvoiceData(null)}
+                                    className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm"
+                                >
+                                    Close
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        window.print();
+                                    }}
+                                    className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md flex items-center gap-2"
+                                >
+                                    <span>🖨️</span>
+                                    <span>Print / Save as PDF</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

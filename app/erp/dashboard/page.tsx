@@ -3,24 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-interface HealthData {
-    service: string;
-    version: string;
-    timestamp: string;
-    environment: string;
-    database: {
-        orm: string;
-        driver: string;
-        status: string;
-        latencyMs: number | null;
-        error: string | null;
-    };
-    supabase: {
-        configured: boolean;
-        url: string;
-    };
-}
-
 interface ExpenseItem {
     id: string;
     title: string;
@@ -35,17 +17,23 @@ interface ExpenseItem {
     notes?: string;
 }
 
+interface BackupItem {
+    backupId: string;
+    createdAt: string;
+    initiatedBy: { fullName: string; email: string };
+    totalTables: number;
+    totalRecords: number;
+    totalFiles: number;
+    byteSize: number;
+    checksum: string;
+    downloadUrl: string;
+}
+
 export default function ErpDashboardPage() {
-    const [health, setHealth] = useState<HealthData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState<string>('');
 
-    // 1. GPS Self-Attendance States
-    const [punching, setPunching] = useState(false);
-    const [punchFeedback, setPunchFeedback] = useState<{ message: string; isGpsVerified: boolean; distance?: number } | null>(null);
-    const [punchError, setPunchError] = useState<string | null>(null);
-    const [empCode, setEmpCode] = useState('BTL-CNC-01');
-
-    // 2. P&L / Margin Summary States
+    // Business KPIs & Margins
     const [marginSummary, setMarginSummary] = useState({
         totalOperatingExpenses: '0.00',
         inventoryGrossRevenuePotential: '0.00',
@@ -55,7 +43,14 @@ export default function ErpDashboardPage() {
         netMarginEstimate: '22.5%',
     });
 
-    // 3. Operating Expenses List & Approval State
+    const [businessCounts, setBusinessCounts] = useState({
+        customers: 0,
+        suppliers: 0,
+        products: 0,
+        expensesPending: 0,
+    });
+
+    // Expenses State
     const [expensesList, setExpensesList] = useState<ExpenseItem[]>([]);
     const [updatingExpenseId, setUpdatingExpenseId] = useState<string | null>(null);
     const [showNewExpenseModal, setShowNewExpenseModal] = useState(false);
@@ -73,102 +68,91 @@ export default function ErpDashboardPage() {
     const [submittingExpense, setSubmittingExpense] = useState(false);
     const [expenseMsg, setExpenseMsg] = useState<string | null>(null);
 
-    const fetchHealthAndMetrics = () => {
+    // Enterprise Backup Modal & State (Admin Only)
+    const [showBackupModal, setShowBackupModal] = useState(false);
+    const [backupsList, setBackupsList] = useState<BackupItem[]>([]);
+    const [isBackingUp, setIsBackingUp] = useState(false);
+    const [backupProgress, setBackupProgress] = useState<{ step: string; percent: number }>({ step: '', percent: 0 });
+    const [backupResultMsg, setBackupResultMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+    const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+
+    const fetchBusinessMetrics = () => {
         setLoading(true);
         Promise.all([
-            fetch('/api/health').then((r) => r.json()).catch(() => null),
+            fetch('/api/auth/me').then((r) => r.json()).catch(() => null),
             fetch('/api/expenses').then((r) => r.json()).catch(() => null),
-        ]).then(([healthData, expenseData]) => {
-            if (healthData) setHealth(healthData);
+            fetch('/api/customers').then((r) => r.json()).catch(() => null),
+            fetch('/api/suppliers').then((r) => r.json()).catch(() => null),
+            fetch('/api/products').then((r) => r.json()).catch(() => null),
+        ]).then(([authData, expenseData, custData, suppData, prodData]) => {
+            if (authData?.user) {
+                setUserRole(authData.user.role);
+            }
             if (expenseData?.marginSummary) setMarginSummary(expenseData.marginSummary);
             if (expenseData?.expenses && Array.isArray(expenseData.expenses)) {
                 setExpensesList(expenseData.expenses);
+                const pending = expenseData.expenses.filter((e: any) => e.status === 'pending_approval').length;
+                setBusinessCounts((prev) => ({ ...prev, expensesPending: pending }));
+            }
+            if (custData?.customers) {
+                setBusinessCounts((prev) => ({ ...prev, customers: custData.customers.length }));
+            }
+            if (suppData?.suppliers) {
+                setBusinessCounts((prev) => ({ ...prev, suppliers: suppData.suppliers.length }));
+            }
+            if (prodData?.products) {
+                setBusinessCounts((prev) => ({ ...prev, products: prodData.products.length }));
             }
             setLoading(false);
         });
     };
 
-    useEffect(() => {
-        fetchHealthAndMetrics();
-    }, []);
-
-    // Handle GPS-Based Self Attendance Punch
-    const handleGpsPunch = (type: 'in' | 'out') => {
-        setPunching(true);
-        setPunchError(null);
-        setPunchFeedback(null);
-
-        if (!navigator.geolocation) {
-            setPunchError('Geolocation is not supported by your browser. Please enable GPS.');
-            setPunching(false);
-            return;
+    const fetchBackups = async () => {
+        try {
+            const res = await fetch('/api/backup');
+            const data = await res.json();
+            if (data.success && data.backups) {
+                setBackupsList(data.backups);
+            }
+        } catch (e) {
+            console.error('Failed to load backup list:', e);
         }
-
-        navigator.geolocation.getCurrentPosition(
-            async (pos) => {
-                const { latitude, longitude } = pos.coords;
-                try {
-                    const res = await fetch('/api/attendance/punch', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            employeeCode: empCode,
-                            latitude,
-                            longitude,
-                            punchType: type,
-                        }),
-                    });
-
-                    const data = await res.json();
-                    if (data.success) {
-                        setPunchFeedback({
-                            message: data.message,
-                            isGpsVerified: data.gpsVerified,
-                            distance: data.distanceMeters,
-                        });
-                    } else {
-                        setPunchError(data.error || 'Failed to record punch.');
-                    }
-                } catch {
-                    setPunchError('Network error connecting to attendance service.');
-                } finally {
-                    setPunching(false);
-                }
-            },
-            (err) => {
-                setPunchError(`GPS Error: ${err.message}. Please enable location permissions.`);
-                setPunching(false);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
     };
 
-    // Handle Expense Status Approval / Rejection
+    useEffect(() => {
+        fetchBusinessMetrics();
+    }, []);
+
+    useEffect(() => {
+        if (isAdmin) {
+            fetchBackups();
+        }
+    }, [isAdmin]);
+
+    // Handle Approving/Rejecting Operating Overhead Expense
     const handleExpenseStatusChange = async (id: string, status: 'approved' | 'rejected') => {
         setUpdatingExpenseId(id);
         try {
             const res = await fetch(`/api/expenses/${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    status,
-                    approvedByEmail: 'finance.admin@btl.engineering',
-                }),
+                body: JSON.stringify({ status }),
             });
             const data = await res.json();
             if (data.success) {
-                fetchHealthAndMetrics();
+                fetchBusinessMetrics();
             } else {
                 alert(data.error || 'Failed to update expense status');
             }
-        } catch (err) {
+        } catch {
             alert('Network error updating expense');
         } finally {
             setUpdatingExpenseId(null);
         }
     };
 
-    // Handle Submitting New Operating Overhead Expense
+    // Handle Recording Operating Expense
     const handleCreateExpense = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmittingExpense(true);
@@ -193,7 +177,7 @@ export default function ErpDashboardPage() {
                     invoiceNumber: '',
                     notes: '',
                 });
-                fetchHealthAndMetrics();
+                fetchBusinessMetrics();
             } else {
                 setExpenseMsg(data.error || 'Failed to record expense');
             }
@@ -204,31 +188,57 @@ export default function ErpDashboardPage() {
         }
     };
 
+    // Execute Enterprise Backup All
+    const handleExecuteBackup = async () => {
+        setIsBackingUp(true);
+        setBackupResultMsg(null);
+        setBackupProgress({ step: 'Extracting relational database & scrubbing security tokens...', percent: 25 });
+
+        try {
+            const res = await fetch('/api/backup', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                setBackupProgress({ step: 'Complete', percent: 100 });
+                setBackupResultMsg({
+                    text: `Backup ${data.backup.backupId} created with ${data.backup.totalTables} tables and ${data.backup.totalStorageFiles} storage files.`,
+                    type: 'success',
+                });
+                fetchBackups();
+            } else {
+                setBackupResultMsg({ text: data.error || 'Backup operation failed.', type: 'error' });
+            }
+        } catch {
+            setBackupResultMsg({ text: 'Network connection error during backup creation.', type: 'error' });
+        } finally {
+            setIsBackingUp(false);
+        }
+    };
+
     return (
         <div className="space-y-8">
             {/* Header Banner */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <div className="flex flex-wrap items-center gap-2 mb-3">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 font-medium text-xs">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 font-semibold text-xs">
                             <span className="h-2 w-2 rounded-full bg-blue-600"></span>
-                            Est. 2024 • Hosur, Tamil Nadu
+                            Hosur Plant • Est. 2024
                         </span>
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-orange-50 border border-orange-200 text-orange-700 font-semibold text-xs">
-                            Automotive & Aerospace Precision
+                            Precision Automotive & Aerospace Components
                         </span>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                        BTL Engineering ERP Operations Hub
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                        Operations & Business Intelligence Hub
                     </h1>
                     <p className="text-slate-600 text-sm mt-1 max-w-2xl">
-                        Central operations dashboard for CNC manufacturing, supply chain, GPS workforce attendance, and executive margin analysis.
+                        Plant manufacturing metrics, executive operating margins, supplier procurement, and live inventory financials.
                     </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
                     <button
-                        onClick={fetchHealthAndMetrics}
+                        onClick={fetchBusinessMetrics}
                         className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors flex items-center gap-2 shadow-sm"
                     >
                         <span>🔄</span>
@@ -241,6 +251,15 @@ export default function ErpDashboardPage() {
                         <span>➕</span>
                         <span>Record Plant Expense</span>
                     </button>
+                    {isAdmin && (
+                        <button
+                            onClick={() => setShowBackupModal(true)}
+                            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-colors flex items-center gap-2"
+                        >
+                            <span>💾</span>
+                            <span>Enterprise Backup</span>
+                        </button>
+                    )}
                     <Link
                         href="/erp/sales"
                         className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-colors"
@@ -250,129 +269,83 @@ export default function ErpDashboardPage() {
                 </div>
             </div>
 
-            {/* Widget Row 1: Executive P&L & Margins + GPS Self-Attendance */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* 1. GPS Self-Attendance Punch Card */}
-                <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xl">📍</span>
-                                <h3 className="font-bold text-slate-900 text-sm">GPS Self-Attendance</h3>
-                            </div>
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                Hosur Geofence
-                            </span>
-                        </div>
-                        <p className="text-xs text-slate-500 mb-4">
-                            Biometric-free mobile punch. Automatically verifies your device position against the Hosur plant radius (SIPCOT Phase 1).
-                        </p>
-
-                        <div className="mb-4">
-                            <label className="block text-[11px] font-semibold text-slate-700 mb-1">Machinist / Employee ID</label>
-                            <input
-                                type="text"
-                                value={empCode}
-                                onChange={(e) => setEmpCode(e.target.value.toUpperCase())}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-900 focus:outline-none focus:border-blue-600"
-                            />
-                        </div>
-
-                        {punchError && (
-                            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs mb-3">
-                                {punchError}
-                            </div>
-                        )}
-
-                        {punchFeedback && (
-                            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs mb-3 space-y-1">
-                                <div className="font-bold">{punchFeedback.message}</div>
-                                <div className="text-[11px] text-emerald-600">
-                                    {punchFeedback.isGpsVerified ? '✓ Within plant geofence' : '⚠️ Outside plant perimeter'}{' '}
-                                    {punchFeedback.distance !== undefined && `(~${punchFeedback.distance}m)`}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
-                        <button
-                            disabled={punching}
-                            onClick={() => handleGpsPunch('in')}
-                            className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
-                        >
-                            <span>🟢</span>
-                            <span>{punching ? 'Locating...' : 'Punch In'}</span>
-                        </button>
-                        <button
-                            disabled={punching}
-                            onClick={() => handleGpsPunch('out')}
-                            className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
-                        >
-                            <span>🔴</span>
-                            <span>Punch Out</span>
-                        </button>
-                    </div>
+            {/* Quick Business KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
+                    <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Active Customers</span>
+                    <div className="text-2xl font-bold text-slate-900 mt-1">{businessCounts.customers}</div>
+                    <span className="text-[11px] text-slate-400 mt-1 block">Tier-1 OEM & Aerospace</span>
                 </div>
-
-                {/* 2. Executive P&L & Operating Margins */}
-                <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-sm lg:col-span-2 flex flex-col justify-between">
-                    <div>
-                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                            <div>
-                                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                                    <span>📈</span>
-                                    <span>Executive Profit & Loss (P&L) and Margins</span>
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    Real-time margins derived from finished inventory sales value vs raw materials & plant operating costs
-                                </p>
-                            </div>
-                            <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-semibold border border-blue-200 font-mono">
-                                Live Financials
-                            </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-                                <span className="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Gross Margin</span>
-                                <span className="text-xl font-bold text-emerald-600 block">{marginSummary.grossMarginPercent}</span>
-                                <span className="text-[10px] text-slate-400 block mt-1">Component Price vs BOM</span>
-                            </div>
-
-                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-                                <span className="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Estimated Net Margin</span>
-                                <span className="text-xl font-bold text-blue-600 block">{marginSummary.netMarginEstimate}</span>
-                                <span className="text-[10px] text-slate-400 block mt-1">After Plant Overheads</span>
-                            </div>
-
-                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-                                <span className="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Finished Valuation</span>
-                                <span className="text-xl font-bold text-slate-900 block">₹{marginSummary.inventoryGrossRevenuePotential}</span>
-                                <span className="text-[10px] text-slate-400 block mt-1">Live Finished Goods</span>
-                            </div>
-
-                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-                                <span className="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Operating Overheads</span>
-                                <span className="text-xl font-bold text-amber-600 block">₹{marginSummary.totalOperatingExpenses}</span>
-                                <span className="text-[10px] text-slate-400 block mt-1">Tooling, Power & Rent</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                        <span className="text-slate-500">
-                            Formula: <strong>Gross Revenue - Raw Material (BOM) - Plant Expenses = Net Margin</strong>
-                        </span>
-                        <Link href="/erp/products" className="text-blue-600 font-semibold hover:underline">
-                            Inspect Component Unit Costing →
-                        </Link>
-                    </div>
+                <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
+                    <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Approved Suppliers</span>
+                    <div className="text-2xl font-bold text-slate-900 mt-1">{businessCounts.suppliers}</div>
+                    <span className="text-[11px] text-slate-400 mt-1 block">Alloy steel & tooling vendors</span>
+                </div>
+                <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
+                    <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Component Catalog</span>
+                    <div className="text-2xl font-bold text-blue-600 mt-1">{businessCounts.products}</div>
+                    <span className="text-[11px] text-slate-400 mt-1 block">Precision CNC/VMC parts</span>
+                </div>
+                <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
+                    <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Pending Overheads</span>
+                    <div className="text-2xl font-bold text-amber-600 mt-1">{businessCounts.expensesPending}</div>
+                    <span className="text-[11px] text-slate-400 mt-1 block">Awaiting manager approval</span>
                 </div>
             </div>
 
-            {/* Operating Overheads & Expense Approval Register */}
-            <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-sm space-y-4">
+            {/* Executive P&L & Margins Summary */}
+            <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
+                    <div>
+                        <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                            <span>📈</span>
+                            <span>Executive Profit & Loss (P&L) and Margins</span>
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                            Real-time profitability calculated from live finished inventory sales value vs raw materials & plant operating expenses.
+                        </p>
+                    </div>
+                    <span className="text-xs px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200">
+                        Live Financials
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <span className="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Gross Margin</span>
+                        <span className="text-2xl font-black text-emerald-600 block">{marginSummary.grossMarginPercent}</span>
+                        <span className="text-[10px] text-slate-400 block mt-1">Component Price vs BOM Cost</span>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <span className="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Estimated Net Margin</span>
+                        <span className="text-2xl font-black text-blue-600 block">{marginSummary.netMarginEstimate}</span>
+                        <span className="text-[10px] text-slate-400 block mt-1">After Factory Overheads</span>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <span className="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Finished Goods Valuation</span>
+                        <span className="text-2xl font-black text-slate-900 block font-mono">₹{marginSummary.inventoryGrossRevenuePotential}</span>
+                        <span className="text-[10px] text-slate-400 block mt-1">In-Stock Valuation</span>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <span className="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Monthly Overheads</span>
+                        <span className="text-2xl font-black text-amber-600 block font-mono">₹{marginSummary.totalOperatingExpenses}</span>
+                        <span className="text-[10px] text-slate-400 block mt-1">Tooling, Maintenance & Power</span>
+                    </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span>Formula: <strong>Gross Revenue - Raw Material (BOM) - Plant Operating Costs = Net Margin</strong></span>
+                    <Link href="/erp/products" className="text-blue-600 font-semibold hover:underline">
+                        View Unit Cost Breakdown →
+                    </Link>
+                </div>
+            </div>
+
+            {/* Operating Overheads & Expense Register */}
+            <div className="p-6 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div>
                         <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -468,115 +441,112 @@ export default function ErpDashboardPage() {
                 </div>
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
-                    <div className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">
-                        Active Database
-                    </div>
-                    <div className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <span>Supabase</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
-                            PostgreSQL
-                        </span>
-                    </div>
-                    <div className="text-xs text-slate-500 mt-2">Drizzle ORM Engine</div>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
-                    <div className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">
-                        Security & Auth
-                    </div>
-                    <div className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <span>Supabase</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
-                            RBAC
-                        </span>
-                    </div>
-                    <div className="text-xs text-slate-500 mt-2">Role-Based Access Guard</div>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
-                    <div className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">
-                        Accounting Integration
-                    </div>
-                    <div className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <span>TallyPrime</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">
-                            Gateway
-                        </span>
-                    </div>
-                    <div className="text-xs text-slate-500 mt-2">Local Windows Connector</div>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
-                    <div className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">
-                        Facility
-                    </div>
-                    <div className="text-xl sm:text-2xl font-bold text-slate-900">Hosur Plant</div>
-                    <div className="text-xs text-slate-500 mt-2">Tamil Nadu, India</div>
-                </div>
-            </div>
-
-            {/* Real-time Diagnostics Card */}
-            <div className="p-6 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
-                <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
-                    <div>
-                        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <span>⚡</span>
-                            <span>System Diagnostics & Database Handshake</span>
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            Real-time connection with Supabase PostgreSQL via Drizzle ORM
-                        </p>
-                    </div>
-                    <span className="text-[11px] px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-600 font-mono">
-                        /api/health
-                    </span>
-                </div>
-
-                {loading ? (
-                    <div className="py-8 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-                        <svg className="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                        </svg>
-                        <span>Querying PostgreSQL connection health...</span>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                        <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80">
-                            <span className="text-slate-500 uppercase tracking-wider block mb-1 text-[10px]">ORM & Driver</span>
-                            <span className="text-sm font-bold text-slate-900 block">
-                                {health?.database.orm} ({health?.database.driver})
-                            </span>
-                            <span className="text-slate-500 text-[11px] block mt-1">
-                                Status: <strong className="text-emerald-600 font-semibold">{health?.database.status}</strong>
-                            </span>
+            {/* Admin-Only Enterprise Backup & Data Safety Card */}
+            {isAdmin && (
+                <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-xl space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-indigo-600/30 text-indigo-400 border border-indigo-500/40 flex items-center justify-center text-xl">
+                                🛡️
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-base text-white">Enterprise Backup & Data Safety</h3>
+                                <p className="text-xs text-slate-400">
+                                    Read-only consistent database snapshot, technical drawings, and encrypted storage archives.
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80">
-                            <span className="text-slate-500 uppercase tracking-wider block mb-1 text-[10px]">Database Latency</span>
-                            <span className="text-sm font-bold text-emerald-600 block">
-                                {health?.database.latencyMs !== null ? `${health?.database.latencyMs} ms` : 'Standby / Local'}
-                            </span>
-                            <span className="text-slate-500 text-[11px] block mt-1">
-                                {health?.database.error ? `Notice: ${health.database.error}` : 'Connection pool ready'}
-                            </span>
-                        </div>
-
-                        <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80">
-                            <span className="text-slate-500 uppercase tracking-wider block mb-1 text-[10px]">Supabase Endpoint</span>
-                            <span className="text-sm font-bold text-blue-600 block">
-                                {health?.supabase.configured ? 'Configured' : 'Ready'}
-                            </span>
-                            <span className="text-slate-500 text-[11px] block mt-1 truncate">
-                                {health?.supabase.url}
-                            </span>
-                        </div>
+                        <button
+                            onClick={handleExecuteBackup}
+                            disabled={isBackingUp}
+                            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
+                        >
+                            <span>💾</span>
+                            <span>{isBackingUp ? 'Creating Backup Package...' : 'Execute Backup All'}</span>
+                        </button>
                     </div>
-                )}
-            </div>
+
+                    {isBackingUp && (
+                        <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700 space-y-2">
+                            <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                                <span>{backupProgress.step}</span>
+                                <span>{backupProgress.percent}%</span>
+                            </div>
+                            <div className="w-full h-2 rounded-full bg-slate-700 overflow-hidden">
+                                <div
+                                    className="h-full bg-indigo-500 transition-all duration-300"
+                                    style={{ width: `${backupProgress.percent}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {backupResultMsg && (
+                        <div
+                            className={`p-3.5 rounded-2xl text-xs font-medium border ${
+                                backupResultMsg.type === 'success'
+                                    ? 'bg-emerald-950/80 border-emerald-800 text-emerald-200'
+                                    : 'bg-rose-950/80 border-rose-800 text-rose-200'
+                            }`}
+                        >
+                            {backupResultMsg.text}
+                        </div>
+                    )}
+
+                    {/* Historical Backup Archives Table */}
+                    <div className="space-y-2">
+                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            Available Backup Packages ({backupsList.length})
+                        </div>
+                        {backupsList.length === 0 ? (
+                            <div className="text-xs text-slate-500 italic py-3">
+                                No previous backups generated. Click &apos;Execute Backup All&apos; to create an initial snapshot.
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="text-slate-400 uppercase text-[10px] font-semibold border-b border-slate-800">
+                                        <tr>
+                                            <th className="py-2 px-3">Backup ID</th>
+                                            <th className="py-2 px-3">Timestamp</th>
+                                            <th className="py-2 px-3">Tables</th>
+                                            <th className="py-2 px-3">Records</th>
+                                            <th className="py-2 px-3">Files</th>
+                                            <th className="py-2 px-3">Size</th>
+                                            <th className="py-2 px-3 text-right">Download</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-800 font-mono text-[11px]">
+                                        {backupsList.map((b) => (
+                                            <tr key={b.backupId} className="hover:bg-slate-800/40">
+                                                <td className="py-2.5 px-3 font-bold text-indigo-400">{b.backupId}</td>
+                                                <td className="py-2.5 px-3 text-slate-300 font-sans">
+                                                    {new Date(b.createdAt).toLocaleString('en-IN')}
+                                                </td>
+                                                <td className="py-2.5 px-3 text-slate-300">{b.totalTables}</td>
+                                                <td className="py-2.5 px-3 text-emerald-400 font-bold">{b.totalRecords}</td>
+                                                <td className="py-2.5 px-3 text-blue-400">{b.totalFiles}</td>
+                                                <td className="py-2.5 px-3 text-slate-300">
+                                                    {(b.byteSize / 1024).toFixed(1)} KB
+                                                </td>
+                                                <td className="py-2.5 px-3 text-right font-sans">
+                                                    <a
+                                                        href={b.downloadUrl}
+                                                        className="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[10px] inline-flex items-center gap-1"
+                                                    >
+                                                        <span>⬇</span> Download
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Modal: Record Operating Overhead Expense */}
             {showNewExpenseModal && (

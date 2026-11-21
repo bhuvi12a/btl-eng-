@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { products, auditLogs } from '@/lib/db/schema';
+import { products, productImages, auditLogs } from '@/lib/db/schema';
 import { createProductSchema } from '@/lib/validations/phase2';
-import { getCurrentUser } from '@/lib/auth/session';
+import { requireAuth, getCurrentUser } from '@/lib/auth/session';
 import { ilike, or, eq, desc } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const { searchParams } = new URL(req.url);
         const search = searchParams.get('search') || '';
         const categoryId = searchParams.get('categoryId');
@@ -56,7 +59,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const user = await getCurrentUser();
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+        const user = auth.user;
+
         const body = await req.json();
 
         const parsed = createProductSchema.safeParse(body);
@@ -75,6 +81,25 @@ export async function POST(req: NextRequest) {
             .insert(products)
             .values(parsed.data)
             .returning();
+
+        // Also record main image in product_images gallery
+        if (parsed.data.mainImageUrl) {
+            try {
+                await db.insert(productImages).values({
+                    productId: created.id,
+                    imageUrl: parsed.data.mainImageUrl,
+                    thumbnailUrl: parsed.data.mainImageUrl,
+                    fileName: `${created.partNumber}_main.jpg`,
+                    fileSize: 1024,
+                    mimeType: 'image/jpeg',
+                    isPrimary: true,
+                    sortOrder: 0,
+                    uploadedById: user?.id || null,
+                });
+            } catch (imgErr) {
+                console.error('Failed to register main image in gallery:', imgErr);
+            }
+        }
 
         if (user) {
             await db.insert(auditLogs).values({

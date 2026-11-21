@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/session';
-import { formatRoleName, moduleAccessMatrix } from '@/lib/auth/rbac';
+import { formatRoleName, moduleAccessMatrix, canAccessErp } from '@/lib/auth/rbac';
+import { db } from '@/lib/db';
+import { employees } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +18,16 @@ export async function GET() {
             );
         }
 
+        // Check if user is linked to an employee record
+        const linkedEmployee = await db.query.employees.findFirst({
+            where: eq(employees.userId, user.id),
+            with: {
+                department: true,
+            },
+        });
+
         // Compute list of allowed modules for this user's role
-        const allowedModules = Object.keys(moduleAccessMatrix).filter((mod) => {
+        const allowedModules = user.role === 'employee' ? [] : Object.keys(moduleAccessMatrix).filter((mod) => {
             if (user.role === 'super_admin') return true;
             return moduleAccessMatrix[mod]?.includes(user.role);
         });
@@ -30,7 +41,17 @@ export async function GET() {
                 fullName: user.fullName,
                 role: user.role,
                 roleDisplay: formatRoleName(user.role),
+                canAccessErp: canAccessErp(user.role),
                 allowedModules,
+                employee: linkedEmployee ? {
+                    id: linkedEmployee.id,
+                    employeeCode: linkedEmployee.employeeCode,
+                    firstName: linkedEmployee.firstName,
+                    lastName: linkedEmployee.lastName,
+                    designation: linkedEmployee.designation,
+                    department: linkedEmployee.department?.name,
+                    shift: 'General (08:30 - 17:30)',
+                } : null,
             },
         });
     } catch (err: unknown) {

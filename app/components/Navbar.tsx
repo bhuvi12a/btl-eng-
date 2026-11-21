@@ -15,7 +15,6 @@ const navLinks: NavLink[] = [
     { label: 'Company', href: '/about' },
     { label: 'Services', href: '/services' },
     { label: 'Industries', href: '/industries' },
-    { label: 'Attendance', href: '/attendance' },
     { label: 'Testimonials', href: '/testimonials' },
     { label: 'Contact', href: '/contact' },
 ];
@@ -25,10 +24,6 @@ export default function Navbar() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
     const pathname = usePathname();
 
-    if (pathname?.startsWith('/erp')) {
-        return null;
-    }
-
     useEffect(() => {
         const handleScroll = (): void => {
             setIsScrolled(window.scrollY > 10);
@@ -37,6 +32,10 @@ export default function Navbar() {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    if (pathname?.startsWith('/erp') || pathname === '/attendance') {
+        return null;
+    }
 
     const toggleMobileMenu = (): void => {
         setIsMobileMenuOpen(!isMobileMenuOpen);

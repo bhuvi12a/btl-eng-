@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { customerPayments, invoices, auditLogs } from '@/lib/db/schema';
-import { getCurrentUser } from '@/lib/auth/session';
+import { requireAuth, getCurrentUser } from '@/lib/auth/session';
 import { desc, eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const { searchParams } = new URL(req.url);
         const customerId = searchParams.get('customer_id');
 
@@ -39,7 +42,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const currentUser = await getCurrentUser();
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+        const currentUser = auth.user;
+
         const body = await req.json();
         const {
             customerId,

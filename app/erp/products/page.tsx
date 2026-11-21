@@ -101,12 +101,89 @@ export default function ProductsPage() {
     const [docTypeForm, setDocTypeForm] = useState('engineering_drawing');
     const [docTitleForm, setDocTitleForm] = useState('');
 
+    // Main Product Image Pre-Upload for Registration
+    const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
+    const [isUploadingMainImage, setIsUploadingMainImage] = useState(false);
+
     // Toast
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
     const showToast = (text: string, type: 'success' | 'error' = 'success') => {
         setToastMessage({ text, type });
         setTimeout(() => setToastMessage(null), 4500);
+    };
+
+    // Remove or Set Primary Image Handlers
+    const handleSetPrimaryImage = async (productId: string, imageId: string) => {
+        try {
+            const res = await fetch(`/api/products/${productId}/media/${imageId}`, {
+                method: 'PATCH',
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Primary product image updated');
+                loadProductDetails(productId);
+                fetchProducts();
+            } else {
+                showToast(data.error || 'Failed to update primary image', 'error');
+            }
+        } catch {
+            showToast('Network error updating primary image', 'error');
+        }
+    };
+
+    const handleDeleteGalleryImage = async (productId: string, imageId: string) => {
+        if (!confirm('Are you sure you want to remove this photo from the product gallery?')) return;
+        try {
+            const res = await fetch(`/api/products/${productId}/media/${imageId}`, {
+                method: 'DELETE',
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Photo removed successfully');
+                loadProductDetails(productId);
+                fetchProducts();
+            } else {
+                showToast(data.error || 'Failed to delete image', 'error');
+            }
+        } catch {
+            showToast('Network error deleting image', 'error');
+        }
+    };
+
+    // Handle Uploading Main Product Photo before Registration
+    const handleUploadMainProductImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('Image file exceeds maximum allowable size of 10 MB.', 'error');
+            return;
+        }
+
+        setIsUploadingMainImage(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('uploadType', 'image');
+
+            const res = await fetch('/api/products/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.success && data.url) {
+                setProductForm((prev) => ({ ...prev, mainImageUrl: data.url }));
+                setMainImagePreview(data.url);
+                showToast('Main product photograph uploaded successfully!');
+            } else {
+                showToast(data.error || 'Failed to upload image', 'error');
+            }
+        } catch {
+            showToast('Network error uploading product photo', 'error');
+        } finally {
+            setIsUploadingMainImage(false);
+        }
     };
 
     // New Product Form
@@ -304,6 +381,7 @@ export default function ProductsPage() {
             if (data.success) {
                 showToast(`Component ${data.product.partNumber} created successfully!`);
                 setIsProductModalOpen(false);
+                setMainImagePreview(null);
                 fetchProducts();
                 setProductForm({
                     partNumber: '',
@@ -488,18 +566,18 @@ export default function ProductsPage() {
                             ) : (
                                 products.map((p) => (
                                     <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                                        {/* Product Thumbnail with Click-to-Zoom */}
+                                        {/* Product Thumbnail with Click-to-Zoom & Missing Image Status */}
                                         <td className="py-3 px-4">
                                             <div
                                                 onClick={() => {
                                                     if (p.mainImageUrl) setZoomedImage(p.mainImageUrl);
                                                 }}
-                                                className={`w-11 h-11 rounded-xl border relative overflow-hidden flex items-center justify-center text-lg shadow-sm ${
+                                                className={`w-12 h-12 rounded-xl border relative overflow-hidden flex items-center justify-center text-lg shadow-sm ${
                                                     p.mainImageUrl
                                                         ? 'cursor-pointer hover:ring-2 hover:ring-blue-500 border-slate-200'
-                                                        : 'bg-slate-100 border-dashed border-slate-300 text-slate-400'
+                                                        : 'bg-rose-50 border-rose-200 text-rose-500 cursor-pointer'
                                                 }`}
-                                                title={p.mainImageUrl ? 'Click to zoom product image' : 'No photo uploaded'}
+                                                title={p.mainImageUrl ? 'Click to zoom product image' : 'No photo uploaded - Click Inspect to upload image'}
                                             >
                                                 {p.mainImageUrl ? (
                                                     <Image
@@ -509,12 +587,17 @@ export default function ProductsPage() {
                                                         className="object-cover"
                                                     />
                                                 ) : (
-                                                    '🔧'
+                                                    <span className="text-sm">⚠️</span>
                                                 )}
                                             </div>
                                         </td>
                                         <td className="py-3.5 px-4 font-mono font-bold text-blue-700">
-                                            {p.partNumber}
+                                            <div>{p.partNumber}</div>
+                                            {!p.mainImageUrl && (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-700 mt-1">
+                                                    Missing Image
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="py-3.5 px-4">
                                             <div className="font-semibold text-slate-900">{p.name}</div>
@@ -631,12 +714,35 @@ export default function ProductsPage() {
                                                 fill
                                                 className="object-cover group-hover:scale-105 transition-transform"
                                             />
-                                            {img.isPrimary && (
+                                            {img.isPrimary ? (
                                                 <span className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-blue-600/90 text-white text-[9px] font-bold rounded-md shadow-sm">
                                                     PRIMARY
                                                 </span>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleSetPrimaryImage(selectedProductDetails.id, img.id);
+                                                    }}
+                                                    className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-slate-900/70 hover:bg-blue-600 text-white text-[8px] font-bold rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Set as Main Product Image"
+                                                >
+                                                    ★ Set Main
+                                                </button>
                                             )}
-                                            <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-semibold">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteGalleryImage(selectedProductDetails.id, img.id);
+                                                }}
+                                                className="absolute top-1.5 right-1.5 h-5 w-5 bg-rose-600/90 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                                title="Remove this photo"
+                                            >
+                                                ×
+                                            </button>
+                                            <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-semibold pointer-events-none">
                                                 🔍 Zoom
                                             </div>
                                         </div>
@@ -959,6 +1065,61 @@ export default function ProductsPage() {
                                 </div>
                             </div>
 
+                            {/* MANDATORY Main Product Photograph Upload */}
+                            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-slate-800 font-bold text-xs flex items-center gap-1.5">
+                                        <span>📷</span>
+                                        <span>Mandatory Main Product Photograph *</span>
+                                    </label>
+                                    {productForm.mainImageUrl ? (
+                                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                            ✓ Image Ready
+                                        </span>
+                                    ) : (
+                                        <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
+                                            Required to Register
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-[11px] text-slate-500">
+                                    Every active component must have at least one genuine high-resolution photo (JPG, PNG, WEBP - max 10MB).
+                                </p>
+
+                                <div className="flex items-center gap-4 pt-1">
+                                    <div className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 relative overflow-hidden bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        {mainImagePreview ? (
+                                            <Image
+                                                src={mainImagePreview}
+                                                alt="Main Product Preview"
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        ) : isUploadingMainImage ? (
+                                            <span className="text-[10px] text-blue-600 font-bold animate-pulse">Uploading...</span>
+                                        ) : (
+                                            <span className="text-xl text-slate-300">🖼️</span>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer shadow-sm inline-flex items-center gap-1.5 transition-colors">
+                                            <span>{mainImagePreview ? '🔄 Replace Main Photo' : '📁 Choose Product Photo'}</span>
+                                            <input
+                                                type="file"
+                                                accept="image/jpeg,image/png,image/webp,image/jpg"
+                                                className="hidden"
+                                                onChange={handleUploadMainProductImage}
+                                                disabled={isUploadingMainImage}
+                                            />
+                                        </label>
+                                        <span className="text-[10px] text-slate-400 block">
+                                            {isUploadingMainImage ? 'Processing upload...' : 'File will be verified and attached to part gallery'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="pt-4 flex justify-end gap-2 border-t border-slate-100">
                                 <button
                                     type="button"
@@ -1045,6 +1206,61 @@ export default function ProductsPage() {
                                             onChange={handleCategoryPhotoUpload}
                                         />
                                     </label>
+                                </div>
+                            </div>
+
+                            {/* MANDATORY Main Product Photograph Upload */}
+                            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-slate-800 font-bold text-xs flex items-center gap-1.5">
+                                        <span>📷</span>
+                                        <span>Mandatory Main Product Photograph *</span>
+                                    </label>
+                                    {productForm.mainImageUrl ? (
+                                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                            ✓ Image Ready
+                                        </span>
+                                    ) : (
+                                        <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
+                                            Required to Register
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-[11px] text-slate-500">
+                                    Every active component must have at least one genuine high-resolution photo (JPG, PNG, WEBP - max 10MB).
+                                </p>
+
+                                <div className="flex items-center gap-4 pt-1">
+                                    <div className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 relative overflow-hidden bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        {mainImagePreview ? (
+                                            <Image
+                                                src={mainImagePreview}
+                                                alt="Main Product Preview"
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        ) : isUploadingMainImage ? (
+                                            <span className="text-[10px] text-blue-600 font-bold animate-pulse">Uploading...</span>
+                                        ) : (
+                                            <span className="text-xl text-slate-300">🖼️</span>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer shadow-sm inline-flex items-center gap-1.5 transition-colors">
+                                            <span>{mainImagePreview ? '🔄 Replace Main Photo' : '📁 Choose Product Photo'}</span>
+                                            <input
+                                                type="file"
+                                                accept="image/jpeg,image/png,image/webp,image/jpg"
+                                                className="hidden"
+                                                onChange={handleUploadMainProductImage}
+                                                disabled={isUploadingMainImage}
+                                            />
+                                        </label>
+                                        <span className="text-[10px] text-slate-400 block">
+                                            {isUploadingMainImage ? 'Processing upload...' : 'File will be verified and attached to part gallery'}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 

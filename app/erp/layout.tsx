@@ -38,7 +38,7 @@ export default function ErpLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [user, setUser] = useState<{ fullName: string; email: string; roleDisplay: string } | null>(null);
+    const [user, setUser] = useState<{ fullName: string; email: string; role: string; roleDisplay: string } | null>(null);
 
     const isLoginPage = pathname === '/erp/login';
 
@@ -48,12 +48,19 @@ export default function ErpLayout({ children }: { children: React.ReactNode }) {
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.authenticated && data.user) {
+                        // Strict boundary: Employees are barred from ERP access
+                        if (data.user.role === 'employee') {
+                            router.replace('/attendance');
+                            return;
+                        }
                         setUser(data.user);
+                    } else {
+                        router.replace('/erp/login');
                     }
                 })
                 .catch(() => {});
         }
-    }, [isLoginPage]);
+    }, [isLoginPage, router]);
 
     const handleLogout = async () => {
         try {
@@ -207,7 +214,7 @@ export default function ErpLayout({ children }: { children: React.ReactNode }) {
                                     {user?.fullName || 'Super Admin'}
                                 </div>
                                 <div className="text-[10px] text-slate-500 truncate">
-                                    {user?.email || 'admin@btl.engineering'}
+                                    {user?.email || 'dinakaran@btlengg.com'}
                                 </div>
                             </div>
                         </div>

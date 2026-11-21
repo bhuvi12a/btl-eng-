@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { customers, auditLogs } from '@/lib/db/schema';
 import { updateCustomerSchema } from '@/lib/validations/phase2';
-import { getCurrentUser } from '@/lib/auth/session';
+import { requireAuth, getCurrentUser } from '@/lib/auth/session';
 import { eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -12,6 +12,9 @@ export async function GET(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const { id } = await context.params;
         const customer = await db.query.customers.findFirst({
             where: eq(customers.id, id),
@@ -38,8 +41,11 @@ export async function PUT(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+        const user = auth.user;
+
         const { id } = await context.params;
-        const user = await getCurrentUser();
         const body = await req.json();
 
         const parsed = updateCustomerSchema.safeParse(body);
@@ -100,8 +106,11 @@ export async function DELETE(
     context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireAuth(['super_admin', 'admin']);
+        if (auth.errorResponse) return auth.errorResponse;
+        const user = auth.user;
+
         const { id } = await context.params;
-        const user = await getCurrentUser();
 
         const existing = await db.query.customers.findFirst({
             where: eq(customers.id, id),

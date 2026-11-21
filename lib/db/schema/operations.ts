@@ -41,7 +41,7 @@ export const expenseStatusEnum = pgEnum('expense_status', [
     'paid',
 ]);
 
-// 1. Daily Staff & Machinist Attendance with GPS Geofencing
+// 1. Daily Staff & Machinist Attendance with GPS Geofencing and High-Assurance Evidence
 export const attendance = pgTable('attendance', {
     id: uuid('id').defaultRandom().primaryKey(),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
@@ -57,10 +57,39 @@ export const attendance = pgTable('attendance', {
     latitude: numeric('latitude', { precision: 10, scale: 7 }),
     longitude: numeric('longitude', { precision: 10, scale: 7 }),
     gpsVerified: boolean('gps_verified').default(false).notNull(),
+    gpsAccuracyMeters: numeric('gps_accuracy_meters', { precision: 8, scale: 2 }),
+    checkInSelfieKey: text('check_in_selfie_key'),
+    checkInVideoKey: text('check_in_video_key'),
+    checkInVideoDurationMs: integer('check_in_video_duration_ms'),
+    checkOutSelfieKey: text('check_out_selfie_key'),
+    checkOutVideoKey: text('check_out_video_key'),
+    checkOutVideoDurationMs: integer('check_out_video_duration_ms'),
+    deviceInfo: text('device_info'),
+    consentRecordedAt: timestamp('consent_recorded_at', { withTimezone: true }),
+    originalCheckInTime: text('original_check_in_time'),
+    originalCheckOutTime: text('original_check_out_time'),
+    originalStatus: text('original_status'),
     correctionReason: text('correction_reason'),
     correctedById: uuid('corrected_by_id').references(() => users.id, { onDelete: 'set null' }),
     isArchived: boolean('is_archived').default(false).notNull(),
     notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Dedicated immutable audit log for Admin / HR corrections
+export const attendanceCorrectionsLog = pgTable('attendance_corrections_log', {
+    id: uuid('id').defaultRandom().primaryKey(),
+    attendanceId: uuid('attendance_id')
+        .notNull()
+        .references(() => attendance.id, { onDelete: 'cascade' }),
+    adminId: uuid('admin_id')
+        .notNull()
+        .references(() => users.id, { onDelete: 'restrict' }),
+    adminEmail: text('admin_email').notNull(),
+    fieldChanged: text('field_changed').notNull(),
+    oldValue: text('old_value'),
+    newValue: text('new_value').notNull(),
+    correctionReason: text('correction_reason').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

@@ -2,39 +2,68 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { loginSchema } from '@/lib/validations/auth';
 import { db } from '@/lib/db';
-import { users, auditLogs } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { users, employees, auditLogs } from '@/lib/db/schema';
+import { eq, sql } from 'drizzle-orm';
 import { formatRoleName, type UserRole } from '@/lib/auth/rbac';
+import { checkLoginRateLimit, recordFailedAttempt, clearLoginAttempts, getClientIp } from '@/lib/auth/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
+        const ip = getClientIp(req);
+        const rateLimitKey = `login_ip_${ip}`;
+        const rateLimit = checkLoginRateLimit(rateLimitKey);
+        if (!rateLimit.allowed && rateLimit.errorResponse) {
+            return rateLimit.errorResponse;
+        }
 
-        // 1. Zod Validation
-        const parsed = loginSchema.safeParse(body);
-        if (!parsed.success) {
+        const body = await req.json();
+        let emailInput = (body.email || body.username || '').trim();
+        const password = body.password;
+
+        if (!emailInput || !password) {
             return NextResponse.json(
-                {
-                    success: false,
-                    error: 'Validation failed',
-                    issues: parsed.error.flatten().fieldErrors,
-                },
+                { success: false, error: 'Username or email and password are required.' },
                 { status: 400 }
             );
         }
 
-        const { email, password } = parsed.data;
+        // Account-level rate limiting
+        const accountRateKey = `account_${emailInput.toLowerCase()}`;
+        const accountLimit = checkLoginRateLimit(accountRateKey);
+        if (!accountLimit.allowed && accountLimit.errorResponse) {
+            return accountLimit.errorResponse;
+        }
+
+        // If not an email format, check if it matches an employee code or format as default domain
+        let resolvedEmail = emailInput;
+        if (!emailInput.includes('@')) {
+            const cleanCode = emailInput.trim();
+            const emp = await db.query.employees.findFirst({
+                where: sql`UPPER(TRIM(${employees.employeeCode})) = ${cleanCode.toUpperCase()}`,
+                with: { user: true },
+            });
+            if (emp && emp.user?.email) {
+                resolvedEmail = emp.user.email;
+            } else if (emp && emp.email) {
+                resolvedEmail = emp.email;
+            } else {
+                resolvedEmail = `${cleanCode.toLowerCase().replace(/[^a-z0-9]/g, '')}@btlhosur.com`;
+            }
+        }
 
         // 2. Authenticate with Supabase Auth
         const supabase = await createClient();
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-            email,
+            email: resolvedEmail,
             password,
         });
 
         if (authError || !authData.user) {
+            recordFailedAttempt(rateLimitKey);
+            recordFailedAttempt(accountRateKey);
+
             return NextResponse.json(
                 {
                     success: false,
@@ -44,6 +73,10 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // Clear attempts on success
+        clearLoginAttempts(rateLimitKey);
+        clearLoginAttempts(accountRateKey);
+
         // 3. Retrieve user profile and role from Drizzle DB
         let userProfile = await db.query.users.findFirst({
             where: eq(users.id, authData.user.id),
@@ -52,14 +85,14 @@ export async function POST(req: NextRequest) {
         // Auto-provision user record on first login if not present in users table
         if (!userProfile) {
             const role: UserRole =
-                (authData.user.user_metadata?.role as UserRole) || 'production_staff';
+                (authData.user.user_metadata?.role as UserRole) || 'employee';
 
             const [newUser] = await db
                 .insert(users)
                 .values({
                     id: authData.user.id,
-                    email: authData.user.email || email,
-                    fullName: authData.user.user_metadata?.full_name || email.split('@')[0],
+                    email: authData.user.email || resolvedEmail,
+                    fullName: authData.user.user_metadata?.full_name || resolvedEmail.split('@')[0],
                     role,
                     lastLoginAt: new Date(),
                 })

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { customers, products, inventoryStock, auditLogs } from '@/lib/db/schema';
-import { getCurrentUser } from '@/lib/auth/session';
+import { requireAuth, getCurrentUser } from '@/lib/auth/session';
 import { desc, eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -78,6 +78,9 @@ let memoryOrders: SalesOrderRecord[] = [
 
 export async function GET() {
     try {
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+
         const custList = await db.query.customers.findMany({
             orderBy: [desc(customers.createdAt)],
             limit: 50,
@@ -105,7 +108,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
-        const currentUser = await getCurrentUser();
+        const auth = await requireAuth(['super_admin', 'admin', 'manager']);
+        if (auth.errorResponse) return auth.errorResponse;
+        const currentUser = auth.user;
+
         const body = await req.json();
         const { customerName, customerGstin, items, deliveryDate } = body;
 

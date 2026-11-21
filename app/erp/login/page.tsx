@@ -142,17 +142,17 @@ export default function ErpLoginPage() {
                         <div className="font-semibold text-slate-700">Quick Testing Accounts:</div>
                         <div className="grid grid-cols-2 gap-2 font-mono">
                             <div
-                                onClick={() => { setEmail('admin@btl.engineering'); setPassword('Admin@123456'); }}
-                                className="p-2 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 cursor-pointer transition-colors"
+                                onClick={() => { setEmail('admin@btl.engineering'); setPassword('AdminPassword123!'); }}
+                                className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 cursor-pointer transition-colors"
                             >
-                                <span className="block text-slate-900 font-bold">Super Admin</span>
+                                <span className="block text-slate-900 font-bold">Admin</span>
                                 <span className="text-[10px] text-blue-600">Click to autofill</span>
                             </div>
                             <div
-                                onClick={() => { setEmail('store@btl.engineering'); setPassword('Store@123456'); }}
-                                className="p-2 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 cursor-pointer transition-colors"
+                                onClick={() => { setEmail('manager@btl.engineering'); setPassword('ManagerPassword123!'); }}
+                                className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 cursor-pointer transition-colors"
                             >
-                                <span className="block text-slate-900 font-bold">Store Manager</span>
+                                <span className="block text-slate-900 font-bold">Manager</span>
                                 <span className="text-[10px] text-blue-600">Click to autofill</span>
                             </div>
                         </div>

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import ContactForm from './ContactForm';
 
 export const metadata: Metadata = {
     title: 'Contact BTL | Precision Engineering in Hosur, Tamil Nadu',
@@ -27,41 +28,8 @@ export default function ContactPage() {
             {/* ==================== CONTACT FORM & INFO ==================== */}
             <section className="py-24 px-6 bg-white">
                 <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16">
-                    {/* Contact Form */}
-                    <div className="bg-gray-50 p-8 md:p-10 rounded-2xl border border-gray-100 shadow-sm">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
-                        <form className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                                    <input type="text" id="firstName" className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="John" />
-                                </div>
-                                <div>
-                                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                                    <input type="text" id="lastName" className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Doe" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Work Email</label>
-                                <input type="email" id="email" className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="john@company.com" />
-                            </div>
-
-                            <div>
-                                <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-                                <input type="text" id="company" className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Acme Corp" />
-                            </div>
-
-                            <div>
-                                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">Project Details</label>
-                                <textarea id="message" rows={4} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Tell us about your manufacturing requirements..."></textarea>
-                            </div>
-
-                            <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
-                                Send Inquiry
-                            </button>
-                        </form>
-                    </div>
+                    {/* Contact Form with Lead Generation & Email Notification */}
+                    <ContactForm />
 
                     {/* Contact Info */}
                     <div>
@@ -107,7 +75,9 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-gray-900">Email</h3>
-                                        <p className="text-gray-600 mt-1">info@btlengineering.com</p>
+                                        <a href="mailto:dinakaran@btlengg.com" className="text-gray-600 hover:text-blue-600 mt-1 block font-medium transition-colors">
+                                            dinakaran@btlengg.com
+                                        </a>
                                     </div>
                                 </div>
                             </div>

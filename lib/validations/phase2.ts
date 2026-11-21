@@ -73,7 +73,7 @@ export const createProductSchema = z.object({
     maxStockLevel: z.string().default('1000.00'),
     reorderPoint: z.string().default('25.00'),
     hsnCode: z.string().default('8483'),
-    mainImageUrl: z.string().optional().nullable(),
+    mainImageUrl: z.string().min(1, 'Main product photograph is mandatory. Please upload a main image before registering.'),
     isActive: z.boolean().default(true),
 });
 
