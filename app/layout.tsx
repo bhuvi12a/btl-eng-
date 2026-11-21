@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
 export const metadata: Metadata = {
+    metadataBase: new URL('https://www.btlengg.com'),
     title: 'BTL | Automotive & Aerospace Precision Components | Hosur, Tamil Nadu',
     description:
         'Established in 2024 in Hosur, Tamil Nadu, BTL manufactures precision automotive and aerospace components in Steel, Aluminium, and Stainless Steel (SS) with CNC, VMC, drilling, in-house tool room, and complete inspection.',

@@ -15,7 +15,7 @@ const __dirname = path.dirname(__filename);
 // Load configuration
 const configPath = path.join(__dirname, 'config.json');
 let config = {
-    erpCloudUrl: 'http://localhost:3000',
+    erpCloudUrl: 'https://www.btlengg.com',
     connectorId: 'BTL-WIN-CONNECTOR-01',
     connectorSecret: 'btl_tally_sec_994821a8c3d2e',
     deviceName: 'BTL-ACCOUNTS-DESK-01',

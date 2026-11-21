@@ -66,7 +66,7 @@ export async function sendQuoteNotification(payload: QuoteEmailPayload) {
                 </div>
 
                 <div style="margin-top: 25px; text-align: center;">
-                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/erp/customers?status=lead" 
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://www.btlengg.com'}/erp/customers?status=lead" 
                        style="background-color: #0284c7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; display: inline-block;">
                         Open ERP Leads & Customers
                     </a>
